@@ -1,0 +1,32 @@
+## Build
+bin/
+obj/
+artifacts/
+*.user
+*.suo
+
+## Tooling environments
+.venv/
+venv/
+
+## IDE
+.vs/
+.idea/
+.vscode/
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Local audio/tool artefacts
+.work/
+tools/ffmpeg/
+tools/bass/
+*.wav
+*.mp3
+*.flac
+*.m4a
+*.aiff
+*.ogg
+*.opus
+!docs/assets/*.wav

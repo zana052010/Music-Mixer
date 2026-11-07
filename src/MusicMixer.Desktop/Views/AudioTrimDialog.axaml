@@ -1,0 +1,163 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:MusicMixer.Desktop.Trimming"
+        xmlns:controls="using:MusicMixer.Desktop.Controls"
+        xmlns:loc="using:MusicMixer.Desktop.Localization"
+        x:Class="MusicMixer.Desktop.Views.AudioTrimDialog"
+        x:DataType="vm:AudioTrimViewModel"
+        x:CompileBindings="True"
+        Title="{loc:Localize Key=TrimDialogTitle}"
+        Width="920"
+        Height="640"
+        MinWidth="760"
+        MinHeight="560"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        CanResize="True"
+        Background="{DynamicResource CanvasBrush}">
+  <Grid RowDefinitions="Auto,*,Auto">
+    <!-- Header -->
+    <Border Grid.Row="0"
+            Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="0,0,0,1"
+            Padding="28,20">
+      <StackPanel Spacing="2">
+        <TextBlock Text="{loc:Localize Key=TrimDialogEyebrow}" Classes="eyebrow" />
+        <TextBlock Text="{loc:Localize Key=TrimDialogTitle}" Classes="dialog-title" />
+      </StackPanel>
+    </Border>
+
+    <!-- Editor -->
+    <Grid Grid.Row="1" Margin="28,20,28,0" RowDefinitions="Auto,*">
+      <StackPanel Grid.Row="0" Spacing="2" Margin="0,0,0,14">
+        <TextBlock Text="{Binding RoleLabel}" Classes="eyebrow" />
+        <TextBlock Text="{Binding TrackTitle}"
+                   Classes="section-heading"
+                   TextTrimming="CharacterEllipsis" />
+      </StackPanel>
+
+      <Border Grid.Row="1" Classes="card" Padding="20">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto">
+          <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+            <TextBlock Text="{loc:Localize Key=TrimDialogHint}"
+                       Classes="small muted"
+                       TextWrapping="Wrap"
+                       MaxWidth="520"
+                       VerticalAlignment="Center" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+              <TextBlock Text="{Binding PlayheadTimeText}" Classes="mono" />
+              <TextBlock Text="/" Classes="tiny faint" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding DurationText}" Classes="mono muted" />
+            </StackPanel>
+          </Grid>
+
+          <Border Grid.Row="1" Classes="inset" Margin="0,14,0,0" Padding="6,4">
+            <controls:WaveformView Height="148"
+                                   Seed="41"
+                                   Peaks="{Binding Peaks}"
+                                   ShowSelection="True"
+                                   SelectionStart="{Binding SelectionStartFraction}"
+                                   SelectionEnd="{Binding SelectionEndFraction}"
+                                   Progress="{Binding PlayheadFraction}"
+                                   LineBrush="{DynamicResource InkBrush}"
+                                   PlayheadBrush="{DynamicResource InkBrush}"
+                                   BaselineBrush="{DynamicResource DividerBrush}"
+                                   SelectionMaskBrush="{DynamicResource WaveformSelectionMaskBrush}"
+                                   SelectionMarkerBrush="{DynamicResource InkBrush}" />
+          </Border>
+
+          <Slider x:Name="TrimSeekSlider"
+                  Grid.Row="2"
+                  Minimum="0"
+                  Maximum="{Binding DurationSeconds}"
+                  Value="{Binding PlayheadSeconds, Mode=TwoWay}"
+                  Margin="0,6,0,0"
+                  ToolTip.Tip="{loc:Localize Key=TrimSeekHint}" />
+
+          <Grid Grid.Row="3" ColumnDefinitions="*,*" Margin="0,14,0,0">
+            <Border Grid.Column="0" Classes="inset" Padding="12" Margin="0,0,6,0">
+              <StackPanel Spacing="6">
+                <TextBlock Text="{loc:Localize Key=TrimStartLabel}" Classes="eyebrow" />
+                <TextBlock Text="{Binding StartTimeText}" Classes="mono" FontSize="18" />
+                <Button Classes="outline compact"
+                        Content="{loc:Localize Key=TrimSetStart}"
+                        Command="{Binding SetStartHereCommand}"
+                        HorizontalAlignment="Stretch" />
+              </StackPanel>
+            </Border>
+
+            <Border Grid.Column="1" Classes="inset" Padding="12" Margin="6,0,0,0">
+              <StackPanel Spacing="6">
+                <TextBlock Text="{loc:Localize Key=TrimEndLabel}" Classes="eyebrow" />
+                <TextBlock Text="{Binding EndTimeText}" Classes="mono" FontSize="18" />
+                <Button Classes="outline compact"
+                        Content="{loc:Localize Key=TrimSetEnd}"
+                        Command="{Binding SetEndHereCommand}"
+                        HorizontalAlignment="Stretch" />
+              </StackPanel>
+            </Border>
+          </Grid>
+        </Grid>
+      </Border>
+    </Grid>
+
+    <!-- Transport and actions -->
+    <Border Grid.Row="2"
+            Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="0,1,0,0"
+            Padding="28,14">
+      <Grid RowDefinitions="Auto,Auto">
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,Auto,*,Auto">
+          <Button Classes="primary"
+                  Content="{Binding PlayPauseText}"
+                  Command="{Binding PlayPauseCommand}"
+                  MinWidth="92" />
+          <Button Grid.Column="1"
+                  Classes="outline"
+                  Content="{loc:Localize Key=Stop}"
+                  Command="{Binding StopCommand}"
+                  Margin="8,0,0,0" />
+          <Button Grid.Column="2"
+                  Classes="outline"
+                  Content="{loc:Localize Key=TrimPreviewSelection}"
+                  Command="{Binding PreviewSelectionCommand}"
+                  Margin="8,0,0,0" />
+          <Grid Grid.Column="4" ColumnDefinitions="Auto,Auto">
+            <TextBlock Text="{loc:Localize Key=TrimSelectionDurationLabel}"
+                       Classes="eyebrow"
+                       VerticalAlignment="Center" />
+            <TextBlock Grid.Column="1"
+                       Text="{Binding SelectionDurationText}"
+                       Classes="mono"
+                       Margin="8,0,0,0"
+                       VerticalAlignment="Center" />
+          </Grid>
+        </Grid>
+
+        <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto" Margin="0,12,0,0">
+          <StackPanel Spacing="3">
+            <TextBlock Text="{loc:Localize Key=TrimMinimumHint}"
+                       Classes="tiny faint" />
+            <TextBlock Text="{Binding ErrorMessage}"
+                       Classes="small"
+                       Foreground="{DynamicResource InkBrush}"
+                       TextWrapping="Wrap"
+                       IsVisible="{Binding HasError}" />
+          </StackPanel>
+          <Button Grid.Column="1"
+                  Classes="outline"
+                  Content="{loc:Localize Key=Cancel}"
+                  Command="{Binding CancelCommand}"
+                  Margin="12,0,0,0" />
+          <Button Grid.Column="2"
+                  Classes="primary"
+                  Content="{loc:Localize Key=TrimApply}"
+                  Command="{Binding ApplyCommand}"
+                  Margin="8,0,0,0" />
+        </Grid>
+      </Grid>
+    </Border>
+  </Grid>
+</Window>

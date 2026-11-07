@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>MusicMixer.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MusicMixer.Application\MusicMixer.Application.csproj" />
+    <ProjectReference Include="..\..\src\MusicMixer.Domain\MusicMixer.Domain.csproj" />
+    <ProjectReference Include="..\..\src\MusicMixer.Infrastructure\MusicMixer.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\src\MusicMixer.Desktop\Localization\Strings.en.json"
+          Link="Localization\Strings.en.json"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\src\MusicMixer.Desktop\Localization\Strings.ru.json"
+          Link="Localization\Strings.ru.json"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>MusicMixer.Infrastructure</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MusicMixer.Application\MusicMixer.Application.csproj" />
+    <ProjectReference Include="..\MusicMixer.Domain\MusicMixer.Domain.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="ManagedBass" Version="4.0.1" />
+  </ItemGroup>
+</Project>

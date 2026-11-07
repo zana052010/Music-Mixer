@@ -1,0 +1,601 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MusicMixer.Desktop.ViewModels"
+             xmlns:controls="using:MusicMixer.Desktop.Controls"
+             xmlns:loc="using:MusicMixer.Desktop.Localization"
+             x:Class="MusicMixer.Desktop.Views.MainView"
+             x:DataType="vm:MainViewModel"
+             x:CompileBindings="True"
+             Background="{DynamicResource CanvasBrush}">
+  <Grid RowDefinitions="Auto,*">
+    <!-- Masthead -->
+    <Border Grid.Row="0"
+            Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="0,0,0,1">
+      <Grid Height="64" Margin="24,0" ColumnDefinitions="Auto,*,Auto">
+        <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+          <TextBlock Text="{loc:Localize Key=BrandName}"
+                     FontSize="16"
+                     FontWeight="SemiBold" />
+          <Border Width="1" Height="18" Background="{DynamicResource BorderBrush}" />
+          <TextBlock Text="{loc:Localize Key=HeaderMeta}"
+                     Classes="eyebrow"
+                     VerticalAlignment="Center" />
+        </StackPanel>
+
+        <StackPanel Grid.Column="2"
+                    Orientation="Horizontal"
+                    Spacing="8"
+                    VerticalAlignment="Center">
+          <Border Classes="segmented"
+                  ToolTip.Tip="{loc:Localize Key=TooltipTheme}">
+            <StackPanel Orientation="Horizontal" Spacing="1">
+              <Button Classes="language"
+                      Classes.selected="{Binding IsSystemThemeSelected}"
+                      Command="{Binding SetThemeCommand}"
+                      CommandParameter="System"
+                      ToolTip.Tip="{loc:Localize Key=ThemeSystem}">
+                <Viewbox Width="16" Height="16">
+                  <Path Data="{StaticResource SystemThemeIcon}"
+                        Fill="{DynamicResource InkBrush}" />
+                </Viewbox>
+              </Button>
+              <Button Classes="language"
+                      Classes.selected="{Binding IsLightThemeSelected}"
+                      Command="{Binding SetThemeCommand}"
+                      CommandParameter="Light"
+                      ToolTip.Tip="{loc:Localize Key=ThemeLight}">
+                <Viewbox Width="16" Height="16">
+                  <Path Data="{StaticResource SunIcon}"
+                        Fill="{DynamicResource InkBrush}" />
+                </Viewbox>
+              </Button>
+              <Button Classes="language"
+                      Classes.selected="{Binding IsDarkThemeSelected}"
+                      Command="{Binding SetThemeCommand}"
+                      CommandParameter="Dark"
+                      ToolTip.Tip="{loc:Localize Key=ThemeDark}">
+                <Viewbox Width="16" Height="16">
+                  <Path Data="{StaticResource MoonIcon}"
+                        Fill="{DynamicResource InkBrush}" />
+                </Viewbox>
+              </Button>
+            </StackPanel>
+          </Border>
+
+          <Border Classes="segmented"
+                  ToolTip.Tip="{loc:Localize Key=TooltipLanguage}">
+            <StackPanel Orientation="Horizontal" Spacing="1">
+              <Button Classes="language"
+                      Classes.selected="{Binding IsEnglishSelected}"
+                      Content="{loc:Localize Key=LanguageEnglish}"
+                      Command="{Binding SetLanguageCommand}"
+                      CommandParameter="en-US" />
+              <Button Classes="language"
+                      Classes.selected="{Binding IsRussianSelected}"
+                      Content="{loc:Localize Key=LanguageRussian}"
+                      Command="{Binding SetLanguageCommand}"
+                      CommandParameter="ru-RU" />
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- Workspace -->
+    <Grid Grid.Row="1" Margin="24,24,24,28" ColumnDefinitions="*,360">
+      <Grid Grid.Column="0" RowDefinitions="Auto,Auto,*" Margin="0,0,24,0">
+        <!-- Sources heading -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Margin="0,0,0,10">
+          <TextBlock Text="{loc:Localize Key=SourcesIndex}" Classes="eyebrow" />
+          <TextBlock Grid.Column="1"
+                     Text="{loc:Localize Key=SourcesHint}"
+                     Classes="small muted"
+                     HorizontalAlignment="Right" />
+        </Grid>
+
+        <!-- Source pair -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,Auto,*">
+          <Border Grid.Column="0"
+                  x:Name="TrackACard"
+                  Classes="track-card"
+                  Tag="A"
+                  Margin="0,0,8,0"
+                  DragDrop.AllowDrop="True">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto">
+              <Grid Grid.Row="0" ColumnDefinitions="Auto,*">
+                <Border Classes="index-chip"
+                        ToolTip.Tip="{loc:Localize Key=RoleInstrumental}">
+                  <Viewbox Width="18" Height="18">
+                    <Path Data="{StaticResource MusicNoteIcon}"
+                          Fill="{DynamicResource InkBrush}" />
+                  </Viewbox>
+                </Border>
+                <StackPanel Grid.Column="1"
+                            Margin="10,0,0,0"
+                            VerticalAlignment="Center"
+                            Spacing="1">
+                  <TextBlock Text="{loc:Localize Key=TrackA}" Classes="eyebrow-ink" />
+                  <TextBlock Text="{loc:Localize Key=RoleInstrumental}" Classes="small muted" />
+                </StackPanel>
+              </Grid>
+
+              <StackPanel Grid.Row="1" Margin="0,20,0,0" Spacing="3">
+                <TextBlock Text="{Binding TrackA.DisplayTitle}"
+                           Classes="track-title"
+                           TextWrapping="NoWrap" />
+                <TextBlock Text="{Binding TrackA.DisplaySubtitle}"
+                           Classes="small muted"
+                           TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding TrackA.FileNameLabel}"
+                           Classes="tiny faint"
+                           TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding TrackA.TrimRangeLabel}"
+                           Classes="tiny"
+                           IsVisible="{Binding TrackA.HasTrim}"
+                           TextTrimming="CharacterEllipsis" />
+              </StackPanel>
+
+              <Grid Grid.Row="2" Margin="0,16,0,0" ColumnDefinitions="Auto,Auto,Auto,*">
+                <Button Classes="outline compact"
+                        Content="{loc:Localize Key=YouTube}"
+                        Command="{Binding OpenYouTubeSearchCommand}"
+                        ToolTip.Tip="{loc:Localize Key=TooltipYouTube}" />
+                <Button Grid.Column="1"
+                        Classes="outline compact"
+                        Content="{loc:Localize Key=BrowseFile}"
+                        Command="{Binding PickTrackACommand}"
+                        Margin="7,0,0,0"
+                        ToolTip.Tip="{loc:Localize Key=TooltipBrowse}" />
+                <Button Grid.Column="2"
+                        Classes="outline compact"
+                        Content="{loc:Localize Key=TrimAudio}"
+                        Command="{Binding TrimTrackACommand}"
+                        Margin="7,0,0,0" />
+              </Grid>
+
+              <Grid Grid.Row="3" Margin="0,16,0,0" ColumnDefinitions="Auto,Auto,*,Auto">
+                <Border Classes="tag">
+                  <TextBlock Text="{Binding TrackA.BpmLabel}" Classes="mono" />
+                </Border>
+                <Border Grid.Column="1" Classes="tag" Margin="6,0,0,0">
+                  <StackPanel Orientation="Horizontal" Spacing="5">
+                    <TextBlock Text="{Binding TrackA.KeyLabel}" Classes="mono" />
+                    <TextBlock Text="{Binding TrackA.CamelotLabel}" Classes="tiny faint" />
+                  </StackPanel>
+                </Border>
+                <TextBlock Grid.Column="2"
+                           Text="{Binding TrackA.StatusText}"
+                           Classes="tiny faint"
+                           Margin="10,0,0,0"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis" />
+                <TextBlock Grid.Column="3"
+                           Text="{Binding TrackA.DurationLabel}"
+                           Classes="mono muted"
+                           VerticalAlignment="Center" />
+              </Grid>
+            </Grid>
+          </Border>
+
+          <Button Grid.Column="1"
+                  Classes="outline swap"
+                  Command="{Binding SwapTracksCommand}"
+                  AutomationProperties.Name="{loc:Localize Key=TooltipSwapTracks}"
+                  ToolTip.Tip="{loc:Localize Key=TooltipSwapTracks}">
+            <Viewbox Width="18" Height="18">
+              <Path Data="{StaticResource SwapTracksIcon}"
+                    Fill="{DynamicResource InkBrush}" />
+            </Viewbox>
+          </Button>
+
+          <Border Grid.Column="2"
+                  x:Name="TrackBCard"
+                  Classes="track-card"
+                  Tag="B"
+                  Margin="8,0,0,0"
+                  DragDrop.AllowDrop="True">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto">
+              <Grid Grid.Row="0" ColumnDefinitions="Auto,*">
+                <Border Classes="index-chip"
+                        ToolTip.Tip="{loc:Localize Key=RoleVocals}">
+                  <Viewbox Width="18" Height="18">
+                    <Path Data="{StaticResource SingingPersonIcon}"
+                          Fill="{DynamicResource InkBrush}" />
+                  </Viewbox>
+                </Border>
+                <StackPanel Grid.Column="1"
+                            Margin="10,0,0,0"
+                            VerticalAlignment="Center"
+                            Spacing="1">
+                  <TextBlock Text="{loc:Localize Key=TrackB}" Classes="eyebrow-ink" />
+                  <TextBlock Text="{loc:Localize Key=RoleVocals}" Classes="small muted" />
+                </StackPanel>
+              </Grid>
+
+              <StackPanel Grid.Row="1" Margin="0,20,0,0" Spacing="3">
+                <TextBlock Text="{Binding TrackB.DisplayTitle}"
+                           Classes="track-title"
+                           TextWrapping="NoWrap" />
+                <TextBlock Text="{Binding TrackB.DisplaySubtitle}"
+                           Classes="small muted"
+                           TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding TrackB.FileNameLabel}"
+                           Classes="tiny faint"
+                           TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding TrackB.TrimRangeLabel}"
+                           Classes="tiny"
+                           IsVisible="{Binding TrackB.HasTrim}"
+                           TextTrimming="CharacterEllipsis" />
+              </StackPanel>
+
+              <Grid Grid.Row="2" Margin="0,16,0,0" ColumnDefinitions="Auto,Auto,Auto,*">
+                <Button Classes="outline compact"
+                        Content="{loc:Localize Key=YouTube}"
+                        Command="{Binding OpenYouTubeSearchCommand}"
+                        ToolTip.Tip="{loc:Localize Key=TooltipYouTube}" />
+                <Button Grid.Column="1"
+                        Classes="outline compact"
+                        Content="{loc:Localize Key=BrowseFile}"
+                        Command="{Binding PickTrackBCommand}"
+                        Margin="7,0,0,0"
+                        ToolTip.Tip="{loc:Localize Key=TooltipBrowse}" />
+                <Button Grid.Column="2"
+                        Classes="outline compact"
+                        Content="{loc:Localize Key=TrimAudio}"
+                        Command="{Binding TrimTrackBCommand}"
+                        Margin="7,0,0,0" />
+              </Grid>
+
+              <Grid Grid.Row="3" Margin="0,16,0,0" ColumnDefinitions="Auto,Auto,*,Auto">
+                <Border Classes="tag">
+                  <TextBlock Text="{Binding TrackB.BpmLabel}" Classes="mono" />
+                </Border>
+                <Border Grid.Column="1" Classes="tag" Margin="6,0,0,0">
+                  <StackPanel Orientation="Horizontal" Spacing="5">
+                    <TextBlock Text="{Binding TrackB.KeyLabel}" Classes="mono" />
+                    <TextBlock Text="{Binding TrackB.CamelotLabel}" Classes="tiny faint" />
+                  </StackPanel>
+                </Border>
+                <TextBlock Grid.Column="2"
+                           Text="{Binding TrackB.StatusText}"
+                           Classes="tiny faint"
+                           Margin="10,0,0,0"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis" />
+                <TextBlock Grid.Column="3"
+                           Text="{Binding TrackB.DurationLabel}"
+                           Classes="mono muted"
+                           VerticalAlignment="Center" />
+              </Grid>
+            </Grid>
+          </Border>
+        </Grid>
+
+        <!-- Timeline -->
+        <Border Grid.Row="2" Classes="card" Margin="0,20,0,0" Padding="22">
+          <Grid RowDefinitions="Auto,Auto,*,*,Auto,Auto,Auto">
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+              <StackPanel Spacing="2">
+                <TextBlock Text="{loc:Localize Key=TimelineIndex}" Classes="eyebrow" />
+                <TextBlock Text="{loc:Localize Key=TimelineTitle}" Classes="section-heading" />
+              </StackPanel>
+              <StackPanel Grid.Column="1"
+                          Orientation="Horizontal"
+                          Spacing="4"
+                          VerticalAlignment="Center">
+                <TextBlock Text="{Binding PlaybackPositionText}" Classes="mono" />
+                <TextBlock Text="/" Classes="tiny faint" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding PlaybackDurationText}" Classes="mono muted" />
+              </StackPanel>
+            </Grid>
+
+            <Border Grid.Row="1" Classes="rule" Margin="0,14,0,0" />
+
+            <Grid Grid.Row="2" ColumnDefinitions="48,*" Margin="0,14,0,0">
+              <StackPanel VerticalAlignment="Center" Spacing="4">
+                <TextBlock Text="A" FontSize="12" FontWeight="Bold" />
+                <TextBlock Text="{loc:Localize Key=InstrumentalShort}" Classes="eyebrow" />
+              </StackPanel>
+              <Border Grid.Column="1" Classes="inset" Padding="5,3">
+                <controls:WaveformView Seed="19"
+                                       Peaks="{Binding InstrumentalPeaks}"
+                                       Progress="{Binding PlaybackProgress}"
+                                       LineBrush="{DynamicResource InkBrush}"
+                                       PlayheadBrush="{DynamicResource InkBrush}"
+                                       BaselineBrush="{DynamicResource DividerBrush}" />
+              </Border>
+            </Grid>
+
+            <Grid Grid.Row="3" ColumnDefinitions="48,*" Margin="0,10,0,0">
+              <StackPanel VerticalAlignment="Center" Spacing="4">
+                <TextBlock Text="B" FontSize="12" FontWeight="Bold" />
+                <TextBlock Text="{loc:Localize Key=VocalsShort}" Classes="eyebrow" />
+              </StackPanel>
+              <Border Grid.Column="1" Classes="inset" Padding="5,3">
+                <controls:WaveformView Seed="73"
+                                       Peaks="{Binding VocalPeaks}"
+                                       Progress="{Binding PlaybackProgress}"
+                                       LineBrush="{DynamicResource MutedInkBrush}"
+                                       PlayheadBrush="{DynamicResource InkBrush}"
+                                       BaselineBrush="{DynamicResource DividerBrush}" />
+              </Border>
+            </Grid>
+
+            <Slider x:Name="PlaybackSeekSlider"
+                    Grid.Row="4"
+                    Minimum="0"
+                    Maximum="1"
+                    Value="{Binding PlaybackProgress, Mode=TwoWay}"
+                    IsEnabled="{Binding CanSeekPlayback}"
+                    Margin="0,12,0,0"
+                    ToolTip.Tip="{loc:Localize Key=TooltipPlaybackSeek}" />
+
+            <Grid Grid.Row="5" ColumnDefinitions="Auto,Auto,*,Auto" Margin="0,16,0,0">
+              <Button Classes="primary"
+                      Content="{Binding PlayPauseLabel}"
+                      Command="{Binding PlayPauseCommand}"
+                      MinWidth="92"
+                      ToolTip.Tip="{loc:Localize Key=TooltipPlayPause}" />
+              <Button Grid.Column="1"
+                      Classes="outline"
+                      Content="{loc:Localize Key=Stop}"
+                      Command="{Binding StopCommand}"
+                      Margin="8,0,0,0"
+                      ToolTip.Tip="{loc:Localize Key=TooltipStop}" />
+              <TextBlock Grid.Column="2"
+                         Text="{loc:Localize Key=LocalProcessingNote}"
+                         Classes="tiny faint"
+                         HorizontalAlignment="Center"
+                         VerticalAlignment="Center"
+                         Margin="20,0" />
+              <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="16">
+                <StackPanel Width="132" Spacing="1">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="{loc:Localize Key=InstrumentalVolume}" Classes="eyebrow" />
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding InstrumentalVolumeLabel}"
+                               Classes="tiny muted"
+                               Margin="6,0,0,0" />
+                  </Grid>
+                  <Slider Minimum="0"
+                          Maximum="1"
+                          Value="{Binding InstrumentalVolume, Mode=TwoWay}"
+                          ToolTip.Tip="{loc:Localize Key=TooltipInstrumentalVolume}" />
+                </StackPanel>
+                <StackPanel Width="132" Spacing="1">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="{loc:Localize Key=VocalVolume}" Classes="eyebrow" />
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding VocalVolumeLabel}"
+                               Classes="tiny muted"
+                               Margin="6,0,0,0" />
+                  </Grid>
+                  <Slider Minimum="0"
+                          Maximum="1"
+                          Value="{Binding VocalVolume, Mode=TwoWay}"
+                          ToolTip.Tip="{loc:Localize Key=TooltipVocalVolume}" />
+                </StackPanel>
+              </StackPanel>
+            </Grid>
+
+            <Grid Grid.Row="6" ColumnDefinitions="Auto,Auto,*" Margin="0,16,0,0">
+              <Button Classes="primary"
+                      Command="{Binding ExportMixCommand}"
+                      AutomationProperties.Name="{loc:Localize Key=ExportMix}"
+                      ToolTip.Tip="{loc:Localize Key=TooltipExportMix}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <Viewbox Width="16" Height="16">
+                    <Path Data="{StaticResource DownloadIcon}"
+                          Fill="{DynamicResource InverseInkBrush}" />
+                  </Viewbox>
+                  <TextBlock Text="{loc:Localize Key=ExportMix}"
+                             Foreground="{DynamicResource InverseInkBrush}" />
+                </StackPanel>
+              </Button>
+              <Button Grid.Column="1"
+                      Classes="outline"
+                      Content="{loc:Localize Key=TrimAndExportMix}"
+                      Command="{Binding TrimAndExportMixCommand}"
+                      Margin="8,0,0,0"
+                      ToolTip.Tip="{loc:Localize Key=TooltipTrimAndExportMix}" />
+            </Grid>
+          </Grid>
+        </Border>
+      </Grid>
+
+      <!-- Session rail -->
+      <Border Grid.Column="1" Classes="card" Padding="22,22,12,22">
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      Padding="0,0,10,0">
+          <StackPanel>
+            <TextBlock Text="{loc:Localize Key=SessionIndex}" Classes="eyebrow" />
+            <TextBlock Text="{loc:Localize Key=SessionTitle}"
+                       Classes="section-heading"
+                       Margin="0,4,0,0" />
+
+            <Border Classes="inset" Margin="0,16,0,0" Padding="14">
+              <StackPanel Spacing="8">
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBlock Text="{Binding StatusMessage}"
+                             Classes="status-line"
+                             FontWeight="SemiBold"
+                             TextWrapping="Wrap" />
+                  <TextBlock Grid.Column="1"
+                             Text="{Binding ProgressPercentText}"
+                             Classes="mono muted"
+                             Margin="10,0,0,0" />
+                </Grid>
+                <ProgressBar Value="{Binding ProgressPercent}"
+                             Minimum="0"
+                             Maximum="100"
+                             IsIndeterminate="{Binding IsProgressIndeterminate}" />
+              </StackPanel>
+            </Border>
+
+            <Button Classes="primary"
+                    Content="{loc:Localize Key=PrepareMashup}"
+                    Command="{Binding ProcessTracksCommand}"
+                    HorizontalAlignment="Stretch"
+                    Margin="0,12,0,0" />
+            <Button Classes="enhancement"
+                    Classes.active="{Binding IsStemEnhancementEnabled}"
+                    Content="{loc:Localize Key=StemEnhancementToggle}"
+                    Command="{Binding ToggleStemEnhancementCommand}"
+                    IsEnabled="{Binding IsIdle}"
+                    Margin="0,10,0,0"
+                    ToolTip.Tip="{loc:Localize Key=TooltipStemEnhancement}" />
+            <TextBlock Text="{loc:Localize Key=StemEnhancementHint}"
+                       Classes="tiny faint"
+                       TextWrapping="Wrap"
+                       Margin="0,2,0,0" />
+            <Button Classes="outline"
+                    Content="{loc:Localize Key=Cancel}"
+                    Command="{Binding CancelProcessingCommand}"
+                    IsVisible="{Binding IsBusy}"
+                    HorizontalAlignment="Stretch"
+                    Margin="0,8,0,0" />
+            <Border Classes="error-box" IsVisible="{Binding HasError}" Margin="0,12,0,0">
+              <StackPanel Spacing="5">
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBlock Text="{loc:Localize Key=ErrorHeading}" Classes="eyebrow-ink" />
+                  <Button Grid.Column="1"
+                          Classes="ghost compact"
+                          Content="{loc:Localize Key=Dismiss}"
+                          Command="{Binding DismissErrorCommand}"
+                          Padding="4,0"
+                          ToolTip.Tip="{loc:Localize Key=TooltipDismiss}" />
+                </Grid>
+                <TextBlock Text="{Binding ErrorMessage}"
+                           Classes="small"
+                           TextWrapping="Wrap"
+                           LineHeight="17" />
+              </StackPanel>
+            </Border>
+
+            <Border Classes="rule" Margin="0,18,0,0" />
+
+            <TextBlock Text="{loc:Localize Key=AlignmentTitle}"
+                       Classes="eyebrow"
+                       Margin="0,16,0,0" />
+
+            <Grid ColumnDefinitions="*,Auto" Margin="0,12,0,0">
+              <TextBlock Text="{loc:Localize Key=TempoMatch}" Classes="small muted" />
+              <TextBlock Grid.Column="1" Text="{Binding SpeedRatioLabel}" Classes="mono" />
+            </Grid>
+            <Border Classes="rule" Margin="0,9,0,0" />
+            <Grid ColumnDefinitions="*,Auto" Margin="0,9,0,0">
+              <TextBlock Text="{loc:Localize Key=AutoKey}" Classes="small muted" />
+              <TextBlock Grid.Column="1" Text="{Binding AutomaticPitchLabel}" Classes="mono" />
+            </Grid>
+            <Border Classes="rule" Margin="0,9,0,0" />
+            <Grid ColumnDefinitions="*,Auto" Margin="0,9,0,0">
+              <TextBlock Text="{loc:Localize Key=AutoOffset}" Classes="small muted" />
+              <TextBlock Grid.Column="1" Text="{Binding AutomaticOffsetLabel}" Classes="mono" />
+            </Grid>
+
+            <Border Classes="rule" Margin="0,16,0,0" />
+
+            <Grid ColumnDefinitions="*,Auto" Margin="0,14,0,0">
+              <TextBlock Text="{loc:Localize Key=VocalSpeed}" Classes="eyebrow" />
+              <TextBlock Grid.Column="1" Text="{Binding VocalSpeedLabel}" Classes="mono" />
+            </Grid>
+            <Slider Minimum="0.5"
+                    Maximum="2"
+                    TickFrequency="0.005"
+                    IsSnapToTickEnabled="False"
+                    IsEnabled="{Binding CanTuneVocal}"
+                    Value="{Binding VocalSpeedRatio, Mode=TwoWay}"
+                    ToolTip.Tip="{loc:Localize Key=TooltipVocalSpeed}" />
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto" Margin="0,2,0,0">
+              <Button Classes="ghost compact"
+                      Content="{loc:Localize Key=VocalSpeedAuto}"
+                      Command="{Binding ResetVocalSpeedCommand}"
+                      Padding="6,2"
+                      ToolTip.Tip="{loc:Localize Key=TooltipVocalSpeedAuto}" />
+              <Button Grid.Column="1"
+                      Classes="ghost compact"
+                      Content="{loc:Localize Key=VocalSpeedNeutral}"
+                      Command="{Binding SetNeutralVocalSpeedCommand}"
+                      Margin="4,0,0,0"
+                      Padding="6,2"
+                      ToolTip.Tip="{loc:Localize Key=TooltipVocalSpeedNeutral}" />
+              <TextBlock Grid.Column="3"
+                         Text="{Binding AutomaticSpeedLabel}"
+                         Classes="tiny faint"
+                         VerticalAlignment="Center" />
+            </Grid>
+            <TextBlock Text="{loc:Localize Key=VocalSpeedHint}"
+                       Classes="tiny faint"
+                       TextWrapping="Wrap"
+                       Margin="0,5,0,0" />
+
+            <Grid ColumnDefinitions="*,Auto" Margin="0,16,0,0">
+              <TextBlock Text="{loc:Localize Key=FinePitch}" Classes="eyebrow" />
+              <TextBlock Grid.Column="1" Text="{Binding FinePitchLabel}" Classes="mono" />
+            </Grid>
+            <Slider Minimum="-2"
+                    Maximum="2"
+                    TickFrequency="0.1"
+                    IsSnapToTickEnabled="False"
+                    IsEnabled="{Binding IsIdle}"
+                    Value="{Binding FinePitchSemitones, Mode=TwoWay}"
+                    ToolTip.Tip="{loc:Localize Key=TooltipFinePitch}" />
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Text="{loc:Localize Key=PitchRangeNegative}" Classes="tiny faint" />
+              <TextBlock Grid.Column="1"
+                         Text="{loc:Localize Key=PitchRangePositive}"
+                         Classes="tiny faint" />
+            </Grid>
+            <TextBlock Text="{loc:Localize Key=FinePitchHint}"
+                       Classes="tiny faint"
+                       TextWrapping="Wrap"
+                       Margin="0,5,0,0" />
+
+            <Grid ColumnDefinitions="*,Auto" Margin="0,13,0,0">
+              <TextBlock Text="{loc:Localize Key=SyncNudge}" Classes="eyebrow" />
+              <TextBlock Grid.Column="1" Text="{Binding OffsetNudgeLabel}" Classes="mono" />
+            </Grid>
+            <Slider Minimum="-5000"
+                    Maximum="5000"
+                    TickFrequency="250"
+                    IsSnapToTickEnabled="False"
+                    IsEnabled="{Binding IsIdle}"
+                    Value="{Binding OffsetNudgeMilliseconds, Mode=TwoWay}"
+                    ToolTip.Tip="{loc:Localize Key=TooltipSyncNudge}" />
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Text="{loc:Localize Key=OffsetRangeNegative}" Classes="tiny faint" />
+              <TextBlock Grid.Column="1"
+                         Text="{loc:Localize Key=OffsetRangePositive}"
+                         Classes="tiny faint" />
+            </Grid>
+            <Grid ColumnDefinitions="Auto,*" Margin="0,5,0,0">
+              <TextBlock Text="{loc:Localize Key=EffectiveStart}" Classes="tiny faint" />
+              <TextBlock Grid.Column="1"
+                         Text="{Binding EffectiveOffsetLabel}"
+                         Classes="tiny mono muted"
+                         HorizontalAlignment="Right" />
+            </Grid>
+
+            <Border Classes="rule" Margin="0,18,0,0" />
+
+            <TextBlock Text="{loc:Localize Key=AnalysisTitle}"
+                       Classes="eyebrow"
+                       Margin="0,16,0,0" />
+            <Grid ColumnDefinitions="*,Auto" Margin="0,10,0,0">
+              <TextBlock Text="{loc:Localize Key=TempoPairLabel}" Classes="small muted" />
+              <TextBlock Grid.Column="1" Text="{Binding TempoPairLabel}" Classes="tiny mono" />
+            </Grid>
+            <TextBlock Text="{loc:Localize Key=AnalysisNote}"
+                       Classes="tiny faint"
+                       TextWrapping="Wrap"
+                       LineHeight="16"
+                       Margin="0,8,0,0" />
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
+    </Grid>
+  </Grid>
+</UserControl>

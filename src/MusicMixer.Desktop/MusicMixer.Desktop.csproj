@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>MusicMixer.Desktop</RootNamespace>
+    <AssemblyName>MusicMixer</AssemblyName>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.22" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MusicMixer.Application\MusicMixer.Application.csproj" />
+    <ProjectReference Include="..\MusicMixer.Domain\MusicMixer.Domain.csproj" />
+    <ProjectReference Include="..\MusicMixer.Infrastructure\MusicMixer.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Localization\Strings.en.json" />
+    <AvaloniaResource Include="Localization\Strings.ru.json" />
+  </ItemGroup>
+
+  <ItemGroup Condition="Exists('$(MSBuildProjectDirectory)\..\..\tools\ffmpeg\bin\ffmpeg.exe')">
+    <None Include="..\..\tools\ffmpeg\bin\ffmpeg.exe" Link="tools\ffmpeg\bin\ffmpeg.exe" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\tools\ffmpeg\bin\ffprobe.exe" Link="tools\ffmpeg\bin\ffprobe.exe" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup Condition="Exists('$(MSBuildProjectDirectory)\..\..\tools\ffmpeg\bin\ffmpeg')">
+    <None Include="..\..\tools\ffmpeg\bin\ffmpeg" Link="tools\ffmpeg\bin\ffmpeg" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\tools\ffmpeg\bin\ffprobe" Link="tools\ffmpeg\bin\ffprobe" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup Condition="Exists('$(MSBuildProjectDirectory)\..\..\tools\yt-dlp\yt-dlp.exe')">
+    <None Include="..\..\tools\yt-dlp\yt-dlp.exe" Link="tools\yt-dlp\yt-dlp.exe" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup Condition="Exists('$(MSBuildProjectDirectory)\..\..\tools\yt-dlp\yt-dlp')">
+    <None Include="..\..\tools\yt-dlp\yt-dlp" Link="tools\yt-dlp\yt-dlp" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup Condition="Exists('$(MSBuildProjectDirectory)\..\..\tools\bass\x64\bass.dll')">
+    <None Include="..\..\tools\bass\x64\bass.dll" Link="bass.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

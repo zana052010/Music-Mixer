@@ -1,0 +1,207 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:MusicMixer.Desktop.YouTube"
+        xmlns:loc="using:MusicMixer.Desktop.Localization"
+        x:Class="MusicMixer.Desktop.Views.YouTubeSearchDialog"
+        x:DataType="vm:YouTubeSearchViewModel"
+        x:CompileBindings="True"
+        Title="{loc:Localize Key=YouTubeDialogTitle}"
+        Width="900"
+        Height="720"
+        MinWidth="760"
+        MinHeight="560"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        CanResize="True"
+        Background="{DynamicResource CanvasBrush}">
+  <Grid RowDefinitions="Auto,*,Auto">
+    <!-- Dialog masthead -->
+    <Border Grid.Row="0"
+            Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="0,0,0,1"
+            Padding="28,20">
+      <StackPanel Spacing="2">
+        <TextBlock Text="{loc:Localize Key=YouTubeDialogEyebrow}" Classes="eyebrow" />
+        <TextBlock Text="{loc:Localize Key=YouTubeDialogTitle}" Classes="dialog-title" />
+        <TextBlock Text="{loc:Localize Key=YouTubeDialogSubtitle}"
+                   Classes="small muted"
+                   TextWrapping="Wrap"
+                   MaxWidth="620"
+                   Margin="0,5,0,0" />
+      </StackPanel>
+    </Border>
+
+    <!-- Search and results -->
+    <Grid Grid.Row="1" Margin="28,20,28,0" RowDefinitions="Auto,Auto,*">
+      <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+        <TextBox x:Name="SearchBox"
+                 Text="{Binding SearchQuery, Mode=TwoWay}"
+                 Watermark="{loc:Localize Key=SearchPlaceholder}"
+                 IsEnabled="{Binding CanInteract}"
+                 KeyDown="OnSearchKeyDown" />
+        <Button Grid.Column="1"
+                Classes="primary"
+                Content="{loc:Localize Key=YouTubeSearchAction}"
+                Command="{Binding SearchCommand}"
+                Margin="10,0,0,0"
+                MinWidth="98" />
+      </Grid>
+
+      <TextBlock Grid.Row="1"
+                 Text="{loc:Localize Key=YouTubeSearching}"
+                 Classes="small muted"
+                 IsVisible="{Binding IsSearching}"
+                 Margin="0,8,0,0" />
+
+      <Border Grid.Row="2" Classes="card" Padding="0" Margin="0,14,0,0">
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+          <StackPanel Margin="20,0">
+            <Border Classes="error-box"
+                    IsVisible="{Binding HasError}"
+                    Margin="0,20,0,0">
+              <StackPanel Spacing="4">
+                <TextBlock Text="{loc:Localize Key=ErrorHeading}" Classes="eyebrow-ink" />
+                <TextBlock Text="{Binding ErrorMessage}"
+                           Classes="small"
+                           TextWrapping="Wrap"
+                           LineHeight="17" />
+                <Button Classes="outline compact"
+                        Content="{loc:Localize Key=YouTubeChooseCookies}"
+                        Command="{Binding ChooseCookiesFileCommand}"
+                        IsVisible="{Binding ShowCookiesFileAction}"
+                        HorizontalAlignment="Left"
+                        Margin="0,4,0,0"
+                        ToolTip.Tip="{loc:Localize Key=TooltipYouTubeCookies}" />
+              </StackPanel>
+            </Border>
+
+            <Grid>
+              <StackPanel IsVisible="{Binding ShowSearchPrompt}"
+                          Spacing="7"
+                          VerticalAlignment="Center"
+                          Margin="0,60">
+                <TextBlock Text="{loc:Localize Key=YouTubeEmptyHeading}"
+                           Classes="section-heading"
+                           HorizontalAlignment="Center" />
+                <TextBlock Text="{loc:Localize Key=YouTubeSearchPrompt}"
+                           Classes="small muted"
+                           TextWrapping="Wrap"
+                           TextAlignment="Center"
+                           MaxWidth="430" />
+              </StackPanel>
+
+              <TextBlock Text="{loc:Localize Key=YouTubeNoResults}"
+                         Classes="small muted"
+                         IsVisible="{Binding ShowNoResults}"
+                         TextWrapping="Wrap"
+                         TextAlignment="Center"
+                         Margin="0,60" />
+
+              <ItemsControl ItemsSource="{Binding Results}"
+                            IsVisible="{Binding HasResults}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:YouTubeResultViewModel">
+                    <Border Classes="result-row">
+                      <Grid ColumnDefinitions="56,*,Auto">
+                        <Border Classes="thumbnail">
+                          <Grid>
+                            <TextBlock Text="{Binding Initials}"
+                                       Classes="mono muted"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" />
+                            <Image Source="{Binding Thumbnail}"
+                                   Stretch="UniformToFill" />
+                          </Grid>
+                        </Border>
+
+                        <StackPanel Grid.Column="1"
+                                    Margin="12,0,12,0"
+                                    VerticalAlignment="Center"
+                                    Spacing="3">
+                          <TextBlock Text="{Binding Title}"
+                                     FontSize="14"
+                                     FontWeight="SemiBold"
+                                     TextTrimming="CharacterEllipsis" />
+                          <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="{Binding Author}"
+                                       Classes="small muted"
+                                       TextTrimming="CharacterEllipsis"
+                                       MaxWidth="230" />
+                            <TextBlock Text="·" Classes="tiny faint" />
+                            <TextBlock Text="{Binding DurationText}" Classes="tiny faint" />
+                          </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2"
+                                    Orientation="Horizontal"
+                                    Spacing="6"
+                                    VerticalAlignment="Center">
+                          <Button Classes="outline compact"
+                                  Content="{loc:Localize Key=YouTubeSetTrackA}"
+                                  Command="{Binding SetAsTrackACommand}" />
+                          <Button Classes="primary compact"
+                                  Content="{loc:Localize Key=YouTubeSetTrackB}"
+                                  Command="{Binding SetAsTrackBCommand}" />
+                        </StackPanel>
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Grid>
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
+    </Grid>
+
+    <!-- Download status and legal note -->
+    <Border Grid.Row="2"
+            Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="0,1,0,0"
+            Padding="28,14">
+      <StackPanel Spacing="9">
+        <Border Classes="inset"
+                IsVisible="{Binding IsDownloading}"
+                Padding="12,10">
+          <StackPanel Spacing="7">
+            <Grid ColumnDefinitions="*,Auto">
+              <StackPanel Spacing="2">
+                <TextBlock Text="{Binding DownloadingTitle}"
+                           FontSize="12"
+                           FontWeight="SemiBold"
+                           TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding DownloadStageText}"
+                           Classes="tiny faint" />
+              </StackPanel>
+              <TextBlock Grid.Column="1"
+                         Text="{Binding DownloadProgressText}"
+                         Classes="mono muted"
+                         Margin="10,0,0,0"
+                         VerticalAlignment="Center" />
+            </Grid>
+            <ProgressBar Minimum="0"
+                         Maximum="100"
+                         Value="{Binding DownloadProgress}" />
+          </StackPanel>
+        </Border>
+
+        <StackPanel Orientation="Horizontal"
+                    Spacing="6"
+                    IsVisible="{Binding HasCustomCookies}">
+          <TextBlock Text="{loc:Localize Key=YouTubeCookiesActive}"
+                     Classes="eyebrow" />
+          <TextBlock Text="{Binding CookiesFileName}"
+                     Classes="tiny mono muted" />
+        </StackPanel>
+
+        <TextBlock Text="{loc:Localize Key=YouTubeDisclaimer}"
+                   Classes="tiny faint"
+                   TextWrapping="Wrap"
+                   LineHeight="15" />
+      </StackPanel>
+    </Border>
+  </Grid>
+</Window>
