@@ -1,5 +1,7 @@
 # MusicMixer — студия мэшапов
 
+[![CI](https://github.com/zana052010/Music-Mixer/actions/workflows/ci.yml/badge.svg)](https://github.com/zana052010/Music-Mixer/actions/workflows/ci.yml)
+
 Музыкальная рабочая станция на Avalonia для создания мэшапов «вокал поверх инструментала». Приложение работает на Windows, Linux и macOS.
 
 - **Дорожка A** разделяется на инструментальный стем.
@@ -160,7 +162,7 @@ $env:MUSICMIXER_DEMUCS = "C:\path\to\.venv\Scripts\demucs.exe"
 $env:MUSICMIXER_YTDLP_JS_RUNTIME = "node:C:\Program Files\nodejs\node.exe"
 ```
 
-Локальная сборка `yt-dlp` уже лежит в репозитории и копируется в выходной каталог приложения:
+Бинарник `yt-dlp` не хранится в репозитории. Скачайте свежую сборку со [страницы релизов yt-dlp](https://github.com/yt-dlp/yt-dlp/releases) и положите её по пути ниже — при сборке файл копируется в выходной каталог приложения. Каталог `tools/yt-dlp/` указан в `.gitignore`, поэтому бинарник не попадёт в коммит:
 
 ```text
 tools\yt-dlp\yt-dlp.exe
@@ -235,7 +237,7 @@ dotnet publish src/MusicMixer.Desktop/MusicMixer.Desktop.csproj -c Release -r wi
 
 При необходимости используйте `linux-x64`, `osx-x64` или `osx-arm64`.
 
-Готовая framework-dependent сборка для Windows лежит в [`dist/MusicMixer-Windows`](dist/MusicMixer-Windows). В неё уже включены `ffmpeg`, `ffprobe`, `yt-dlp` и `bass.dll`; для запуска нужен .NET 8 Runtime, а для разделения стемов — установленный Demucs.
+Готовые сборки в репозитории не хранятся: каталоги `dist/` и `publish/` указаны в `.gitignore`. Соберите приложение командой выше или скачайте архив из [GitHub Releases](https://github.com/zana052010/Music-Mixer/releases), если он там опубликован. Если перед сборкой положить `ffmpeg`, `ffprobe`, `yt-dlp` и `bass.dll` в каталог `tools/`, они будут скопированы рядом с приложением. Для запуска нужен .NET 8 Runtime, а для разделения стемов — установленный Demucs.
 
 ---
 
@@ -330,6 +332,8 @@ finalOffset = automaticOffset + nudge
 ```text
 Passed: 78, Failed: 0
 ```
+
+Каждый push в `main` и каждый pull request собирается и тестируется в GitHub Actions на Windows и Ubuntu (`.github/workflows/ci.yml`). Итог прогона для `main` дублируется комментарием в issue **CI status**.
 
 ---
 

@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: write
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "true"
+  CI: "true"
+  CI_STATUS_ISSUE_TITLE: "CI status"
+
+jobs:
+  build-and-test:
+    name: Build & test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore MusicMixer.sln 2>&1 | tee restore.log
+
+      - name: Build
+        run: dotnet build MusicMixer.sln -c Release --no-restore 2>&1 | tee build.log
+
+      - name: Test
+        run: dotnet test MusicMixer.sln -c Release --no-build --logger "console;verbosity=normal" 2>&1 | tee test.log
+
+      # The agent that maintains this repo cannot read Actions logs directly,
+      # so every run on main posts a short report to the "CI status" issue.
+      - name: Report to CI status issue
+        if: always() && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+          RUNNER_LABEL: ${{ matrix.os }}
+        run: |
+          set +e
+          touch restore.log build.log test.log
+          short_sha="${GITHUB_SHA::7}"
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          {
+            echo "### ${JOB_STATUS} | ${RUNNER_LABEL} | ${short_sha}"
+            echo
+            echo "Run: ${run_url}"
+            echo
+            echo "#### Test summary"
+            echo '```text'
+            grep -E "Passed!|Failed!|Total tests|Passed:|Failed:" test.log | head -n 20
+            echo '```'
+            if [ "${JOB_STATUS}" != "success" ]; then
+              echo
+              echo "#### Restore / build errors"
+              echo '```text'
+              grep -hE ": error |error MSB|error NU|error CS|error AVLN" restore.log build.log | sed -E 's#^.*[/\\](src|tests)[/\\]#\1/#' | sort -u | head -n 150
+              echo '```'
+              echo
+              echo "#### Failed tests"
+              echo '```text'
+              grep -E -A 12 "^\s*Failed |\[FAIL\]" test.log | head -n 200
+              echo '```'
+              echo
+              echo "#### Test log tail"
+              echo '```text'
+              tail -n 60 test.log
+              echo '```'
+            fi
+          } > ci-report.md
+          head -c 60000 ci-report.md > ci-report-trimmed.md
+          issue=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "in:title $CI_STATUS_ISSUE_TITLE" --json number,title --jq ".[] | select(.title == \"$CI_STATUS_ISSUE_TITLE\") | .number" | head -n 1)
+          if [ -z "$issue" ]; then
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$CI_STATUS_ISSUE_TITLE" --body-file ci-report-trimmed.md
+          else
+            gh issue comment "$issue" --repo "$GITHUB_REPOSITORY" --body-file ci-report-trimmed.md
+          fi
