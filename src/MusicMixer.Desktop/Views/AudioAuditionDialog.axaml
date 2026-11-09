@@ -11,6 +11,7 @@
         Height="590"
         MinWidth="720"
         MinHeight="520"
+        Icon="/Assets/MusicMixer.ico"
         WindowStartupLocation="CenterOwner"
         ShowInTaskbar="False"
         CanResize="True"

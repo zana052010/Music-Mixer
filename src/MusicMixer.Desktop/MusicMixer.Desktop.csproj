@@ -6,6 +6,8 @@
     <AssemblyName>MusicMixer</AssemblyName>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Иконка генерируется из Assets\MusicMixer.ico.b64 перед сборкой (см. DecodeAppIcon). -->
+    <ApplicationIcon>Assets\MusicMixer.ico</ApplicationIcon>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
@@ -27,6 +29,7 @@
   <ItemGroup>
     <AvaloniaResource Include="Localization\Strings.en.json" />
     <AvaloniaResource Include="Localization\Strings.ru.json" />
+    <AvaloniaResource Include="Assets\MusicMixer.ico" />
   </ItemGroup>
 
   <ItemGroup Condition="Exists('$(MSBuildProjectDirectory)\..\..\tools\ffmpeg\bin\ffmpeg.exe')">
@@ -42,4 +45,32 @@
   <ItemGroup Condition="Exists('$(MSBuildProjectDirectory)\..\..\tools\bass\x64\bass.dll')">
     <None Include="..\..\tools\bass\x64\bass.dll" Link="bass.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
+  <!--
+    Иконка приложения хранится в git как base64-текст (Assets\MusicMixer.ico.b64),
+    а настоящий .ico собирается здесь перед компиляцией. Исходник — Assets\icon.svg.
+  -->
+  <UsingTask TaskName="DecodeBase64File"
+             TaskFactory="RoslynCodeTaskFactory"
+             AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <SourceFile ParameterType="System.String" Required="true" />
+      <DestinationFile ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        var text = System.IO.File.ReadAllText(SourceFile);
+        var bytes = System.Convert.FromBase64String(text.Replace("\r", "").Replace("\n", "").Trim());
+        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(DestinationFile));
+        System.IO.File.WriteAllBytes(DestinationFile, bytes);
+      ]]></Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="DecodeAppIcon"
+          BeforeTargets="BeforeBuild;CoreCompile"
+          Inputs="$(MSBuildProjectDirectory)\Assets\MusicMixer.ico.b64"
+          Outputs="$(MSBuildProjectDirectory)\Assets\MusicMixer.ico">
+    <DecodeBase64File SourceFile="$(MSBuildProjectDirectory)\Assets\MusicMixer.ico.b64"
+                      DestinationFile="$(MSBuildProjectDirectory)\Assets\MusicMixer.ico" />
+  </Target>
 </Project>

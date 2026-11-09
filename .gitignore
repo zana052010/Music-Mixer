@@ -40,3 +40,6 @@ tools/yt-dlp/
 installer/Output/
 build/
 downloads/
+
+# Иконка собирается из Assets/MusicMixer.ico.b64 при сборке
+src/MusicMixer.Desktop/Assets/MusicMixer.ico
