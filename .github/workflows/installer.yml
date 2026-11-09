@@ -75,7 +75,8 @@ jobs:
           {
             python -m pip install --upgrade pip
             python -m pip install torch==2.5.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cpu
-            python -m pip install demucs==4.0.1 soundfile pyinstaller==6.11.1
+            python -m pip install "numpy==1.26.4" demucs==4.0.1 soundfile "pyinstaller==6.16.0" "pyinstaller-hooks-contrib>=2025.8"
+            python -c "import numpy, torch, torchaudio; print('numpy', numpy.__version__, 'torch', torch.__version__, 'torchaudio', torchaudio.__version__)"
             python -m PyInstaller --noconfirm --clean --onedir --console --name demucs \
               --distpath build/demucs-dist --workpath build/demucs-work \
               --collect-all demucs --collect-all julius --collect-all openunmix \
