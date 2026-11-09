@@ -30,3 +30,8 @@ tools/bass/
 *.ogg
 *.opus
 !docs/assets/*.wav
+
+## Release artefacts (публикуются через GitHub Releases, не через git)
+dist/
+publish/
+tools/yt-dlp/
