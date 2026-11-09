@@ -1,6 +1,8 @@
 // Модель одной исходной дорожки (A или B) для карточки в UI.
 // Слой Desktop. Хранит трек, путь к исходнику, диапазон обрезки и
 // локализованные подписи; сам звук не обрабатывает.
+using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MusicMixer.Desktop.Localization;
@@ -22,6 +24,9 @@ public sealed partial class TrackSlotViewModel : ObservableObject, IDisposable
     private string? _sourceFilePath;
     private TimeSpan? _trimStart;
     private TimeSpan? _trimEnd;
+    // Номер текущего импорта: фоновая загрузка обложки сверяет его,
+    // чтобы не поставить картинку предыдущего трека.
+    private int _coverToken;
 
     // Поля редактора округляют BPM до сотых, а первую долю до миллисекунд;
     // разница меньше шага округления не считается ручной поправкой.
@@ -130,6 +135,53 @@ public sealed partial class TrackSlotViewModel : ObservableObject, IDisposable
 
     public bool HasAnalysis => Track?.HasAnalysis == true;
 
+    /// <summary>Обложка трека: встроенная в файл или превью YouTube.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCover))]
+    private Bitmap? cover;
+
+    public bool HasCover => Cover is not null;
+
+    public int CoverToken => _coverToken;
+
+    /// <summary>
+    /// Ставит обложку, если слот всё ещё держит тот же импорт; иначе освобождает картинку.
+    /// </summary>
+    public bool TrySetCover(int token, Bitmap bitmap)
+    {
+        ArgumentNullException.ThrowIfNull(bitmap);
+        if (token != _coverToken)
+        {
+            bitmap.Dispose();
+            return false;
+        }
+
+        var previous = Cover;
+        Cover = bitmap;
+        DisposeLater(previous);
+        return true;
+    }
+
+    private void ResetCover()
+    {
+        _coverToken++;
+        var previous = Cover;
+        Cover = null;
+        DisposeLater(previous);
+    }
+
+    private static void DisposeLater(Bitmap? bitmap)
+    {
+        if (bitmap is null)
+        {
+            return;
+        }
+
+        // Bitmap держит нативную память. Освобождаем после того, как интерфейс
+        // переключится на новую картинку.
+        Dispatcher.UIThread.Post(bitmap.Dispose, DispatcherPriority.Background);
+    }
+
     public void SetStatus(string key)
     {
         _statusKey = key;
@@ -146,6 +198,7 @@ public sealed partial class TrackSlotViewModel : ObservableObject, IDisposable
         _sourceFilePath = Path.GetFullPath(sourceFilePath);
         _trimStart = null;
         _trimEnd = null;
+        ResetCover();
         Track = track;
         NotifyTrimState();
     }
@@ -201,6 +254,14 @@ public sealed partial class TrackSlotViewModel : ObservableObject, IDisposable
         var statusKey = _statusKey;
         _statusKey = other._statusKey;
         other._statusKey = statusKey;
+
+        var coverImage = Cover;
+        Cover = other.Cover;
+        other.Cover = coverImage;
+
+        var coverToken = _coverToken;
+        _coverToken = other._coverToken;
+        other._coverToken = coverToken;
 
         NotifyTrimState();
         other.NotifyTrimState();
@@ -283,7 +344,13 @@ public sealed partial class TrackSlotViewModel : ObservableObject, IDisposable
         return new TrackAnalysisOverride(bpm, downbeat, key);
     }
 
-    public void Dispose() => _localization.LanguageChanged -= OnLanguageChanged;
+    public void Dispose()
+    {
+        _localization.LanguageChanged -= OnLanguageChanged;
+        var coverImage = Cover;
+        Cover = null;
+        coverImage?.Dispose();
+    }
 
     partial void OnTrackChanged(AudioTrack? value)
     {

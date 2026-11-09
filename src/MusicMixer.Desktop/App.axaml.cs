@@ -119,6 +119,11 @@ public partial class App : Avalonia.Application
             provider => new FfmpegAudioTrimmerService(
                 provider.GetRequiredService<IProcessRunner>(),
                 ffmpegOptions));
+        // Встроенные обложки MP3/FLAC/M4A/OGG для карточек треков.
+        services.AddSingleton<ICoverArtService>(
+            provider => new FfmpegCoverArtService(
+                provider.GetRequiredService<IProcessRunner>(),
+                ffmpegOptions));
         // Сведение готового микса в один WAV для скачивания.
         services.AddSingleton<IMixdownService>(
             provider => new FfmpegMixdownService(

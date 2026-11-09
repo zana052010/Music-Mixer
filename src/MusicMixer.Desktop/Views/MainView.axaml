@@ -121,7 +121,8 @@
                 </StackPanel>
               </Grid>
 
-              <StackPanel Grid.Row="1" Margin="0,20,0,0" Spacing="3">
+              <Grid Grid.Row="1" Margin="0,20,0,0" ColumnDefinitions="*,Auto">
+              <StackPanel Spacing="3" VerticalAlignment="Center">
                 <TextBlock Text="{Binding TrackA.DisplayTitle}"
                            Classes="track-title"
                            TextWrapping="NoWrap" />
@@ -136,6 +137,12 @@
                            IsVisible="{Binding TrackA.HasTrim}"
                            TextTrimming="CharacterEllipsis" />
               </StackPanel>
+                <Border Grid.Column="1"
+                        Classes="track-cover"
+                        IsVisible="{Binding TrackA.HasCover}">
+                  <Image Source="{Binding TrackA.Cover}" Stretch="UniformToFill" />
+                </Border>
+              </Grid>
 
               <Grid Grid.Row="2" Margin="0,16,0,0" ColumnDefinitions="Auto,Auto,Auto,*">
                 <Button Classes="outline compact"
@@ -306,7 +313,8 @@
                 </StackPanel>
               </Grid>
 
-              <StackPanel Grid.Row="1" Margin="0,20,0,0" Spacing="3">
+              <Grid Grid.Row="1" Margin="0,20,0,0" ColumnDefinitions="*,Auto">
+              <StackPanel Spacing="3" VerticalAlignment="Center">
                 <TextBlock Text="{Binding TrackB.DisplayTitle}"
                            Classes="track-title"
                            TextWrapping="NoWrap" />
@@ -321,6 +329,12 @@
                            IsVisible="{Binding TrackB.HasTrim}"
                            TextTrimming="CharacterEllipsis" />
               </StackPanel>
+                <Border Grid.Column="1"
+                        Classes="track-cover"
+                        IsVisible="{Binding TrackB.HasCover}">
+                  <Image Source="{Binding TrackB.Cover}" Stretch="UniformToFill" />
+                </Border>
+              </Grid>
 
               <Grid Grid.Row="2" Margin="0,16,0,0" ColumnDefinitions="Auto,Auto,Auto,*">
                 <Button Classes="outline compact"

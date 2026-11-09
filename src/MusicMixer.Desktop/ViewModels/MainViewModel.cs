@@ -3,6 +3,7 @@
 // локализацией: хранит состояние сессии, команды и тексты статусов.
 // Главный сценарий: импорт A/B -> Prepare -> предпросмотр -> точная подстройка.
 using System.ComponentModel;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -46,6 +47,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private readonly ILocalizationService _localization;
     private readonly IThemeService _themeService;
     private readonly IYouTubeDialogService _youTubeDialogService;
+    private readonly ICoverArtService _coverArtService;
+    private readonly HttpClient _httpClient;
+    // Отдельная рабочая область для извлечённых обложек.
+    private IWorkspace? _coverWorkspace;
     private readonly IAudioTrimmerService _audioTrimmer;
     private readonly IAudioTrimDialogService _audioTrimDialogService;
     private readonly IAudioAuditionDialogService _audioAuditionDialogService;
@@ -113,7 +118,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         IAudioAuditionDialogService audioAuditionDialogService,
         IAudioWaveformService waveform,
         IMixdownService mixdownService,
-        IAudioExportDialogService audioExportDialogService)
+        IAudioExportDialogService audioExportDialogService,
+        ICoverArtService coverArtService,
+        HttpClient httpClient)
     {
         _workflow = workflow;
         _player = player;
@@ -128,6 +135,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _waveform = waveform;
         _mixdownService = mixdownService;
         _audioExportDialogService = audioExportDialogService;
+        _coverArtService = coverArtService;
+        _httpClient = httpClient;
 
         TrackA = new TrackSlotViewModel(localization);
         TrackB = new TrackSlotViewModel(localization);
@@ -536,7 +545,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
                 return;
             }
 
-            ApplySelectedTrack(isInstrumental, track);
+            ApplySelectedTrack(isInstrumental, track, result.Track.ThumbnailUrl);
 
             ClearError();
             SetStatus("StatusTrackAssigned");
@@ -975,6 +984,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _youTubeWorkspace = null;
         _trimWorkspace?.Dispose();
         _trimWorkspace = null;
+        _coverWorkspace?.Dispose();
+        _coverWorkspace = null;
         _processCancellation?.Dispose();
         _pitchDebounceCancellation?.Dispose();
         _trimCancellation?.Dispose();
@@ -982,7 +993,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _lifetimeCancellation.Dispose();
     }
 
-    private void ApplySelectedTrack(bool isTrackA, AudioTrack track)
+    private void ApplySelectedTrack(bool isTrackA, AudioTrack track, string? thumbnailUrl = null)
     {
         // Любой новый исходник делает старый микс недействительным:
         // его нельзя показывать как готовый к воспроизведению.
@@ -992,9 +1003,64 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         var slot = isTrackA ? TrackA : TrackB;
         slot.SetImportedTrack(track, track.FilePath);
         slot.SetStatus("StatusReadyToAnalyze");
+        // Обложка грузится в фоне и не задерживает выбор трека.
+        _ = LoadCoverAsync(slot, slot.CoverToken, track.FilePath, thumbnailUrl);
 
         RefreshTrackLabels();
         RefreshCommandAvailability();
+    }
+
+    /// <summary>
+    /// Загружает обложку для карточки: превью YouTube по ссылке или встроенную
+    /// в файл картинку через ffmpeg. Ошибки не показываются: без обложки
+    /// карточка просто остаётся с названием.
+    /// </summary>
+    private async Task LoadCoverAsync(
+        TrackSlotViewModel slot,
+        int token,
+        string audioFilePath,
+        string? thumbnailUrl)
+    {
+        try
+        {
+            var cancellationToken = _lifetimeCancellation.Token;
+            byte[]? imageBytes = null;
+            if (!string.IsNullOrWhiteSpace(thumbnailUrl))
+            {
+                imageBytes = await _httpClient.GetByteArrayAsync(thumbnailUrl, cancellationToken);
+            }
+            else
+            {
+                var workspace = _coverWorkspace ??= _workspaceFactory.Create("covers");
+                var outputPath = Path.Combine(
+                    workspace.DirectoryPath,
+                    Guid.NewGuid().ToString("N") + ".png");
+                var coverPath = await _coverArtService.ExtractEmbeddedCoverAsync(
+                    audioFilePath,
+                    outputPath,
+                    cancellationToken);
+                if (coverPath is not null)
+                {
+                    imageBytes = await File.ReadAllBytesAsync(coverPath, cancellationToken);
+                }
+            }
+
+            if (imageBytes is null || imageBytes.Length == 0 || _disposed)
+            {
+                return;
+            }
+
+            using var stream = new MemoryStream(imageBytes);
+            var bitmap = Bitmap.DecodeToWidth(stream, 256);
+            slot.TrySetCover(token, bitmap);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception)
+        {
+            // Обложка необязательна: битый файл или нет сети не должны мешать работе.
+        }
     }
 
     private async Task TrimTrackAsync(bool isTrackA)
