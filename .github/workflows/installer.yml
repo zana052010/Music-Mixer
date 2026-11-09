@@ -1,3 +1,4 @@
+# Сборка установщика Inno Setup и публикация релиза в GitHub Releases.
 name: Windows installer
 
 on:
