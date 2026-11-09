@@ -14,7 +14,7 @@ internal static class YouTubeFailureFormatter
     public static string? GetTechnicalDetails(YouTubeServiceException exception)
     {
         // Для проверки входа уже есть локализованный и выполнимый совет;
-        // сырой лог yt-dlp с ссылками на cookies только перегружает диалог.
+        // технический текст исключения только перегружает диалог.
         if (exception.Kind == YouTubeFailureKind.SignInRequired)
         {
             return null;

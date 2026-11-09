@@ -1,5 +1,5 @@
 // Ошибки интеграции с YouTube и их категории. Категория нужна, чтобы UI
-// показал локализованный совет, а не технический текст yt-dlp.
+// показал локализованный совет, а не технический текст YoutubeExplode.
 using MusicMixer.Domain.Exceptions;
 
 namespace MusicMixer.Application.YouTube;

@@ -39,14 +39,6 @@
     <None Include="..\..\tools\ffmpeg\bin\ffprobe" Link="tools\ffmpeg\bin\ffprobe" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
-  <ItemGroup Condition="Exists('$(MSBuildProjectDirectory)\..\..\tools\yt-dlp\yt-dlp.exe')">
-    <None Include="..\..\tools\yt-dlp\yt-dlp.exe" Link="tools\yt-dlp\yt-dlp.exe" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
-
-  <ItemGroup Condition="Exists('$(MSBuildProjectDirectory)\..\..\tools\yt-dlp\yt-dlp')">
-    <None Include="..\..\tools\yt-dlp\yt-dlp" Link="tools\yt-dlp\yt-dlp" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
-
   <ItemGroup Condition="Exists('$(MSBuildProjectDirectory)\..\..\tools\bass\x64\bass.dll')">
     <None Include="..\..\tools\bass\x64\bass.dll" Link="bass.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>

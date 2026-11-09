@@ -176,7 +176,7 @@
   "ErrorYouTubeSearch": "Поиск на YouTube не удался. Проверьте подключение и попробуйте снова.",
   "ErrorYouTubeVideoUnavailable": "YouTube не отдаёт это видео: возможно, оно удалено, ограничено по региону или требует входа. Выберите другой результат.",
   "ErrorYouTubeVideoUnplayable": "YouTube не разрешает воспроизведение этого видео здесь. Выберите другой результат.",
-  "ErrorYouTubeSignIn": "YouTube требует подтвердить вход для этой сети. MusicMixer попробовал cookies браузера по умолчанию, но запущенный браузер блокирует свою базу cookies. Полностью закройте Edge/Chrome/Brave, включая фоновые процессы, убедитесь, что вы вошли в YouTube в этом браузере, и повторите загрузку. Либо задайте MUSICMIXER_YTDLP_COOKIES или MUSICMIXER_YTDLP_COOKIES_FROM_BROWSER.",
+  "ErrorYouTubeSignIn": "YouTube требует подтвердить вход или временно ограничил запросы из этой сети. Нажмите «Выбрать cookies.txt» и укажите файл cookies youtube.com в формате Netscape, экспортированный из браузера, где вы вошли в YouTube, или задайте путь к нему в MUSICMIXER_YOUTUBE_COOKIES. Затем повторите загрузку.",
   "ErrorYouTubeCookiesFile": "Не удалось использовать выбранный файл cookies. Экспортируйте cookies youtube.com в формате Netscape и выберите файл снова.",
   "ErrorYouTubeNoAudio": "В этом видео нет пригодного аудиопотока. Выберите другой результат.",
   "ErrorYouTubeDownload": "Не удалось скачать аудио. Проверьте подключение и попробуйте снова.",

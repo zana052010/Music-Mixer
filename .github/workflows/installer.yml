@@ -46,26 +46,21 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Download FFmpeg, yt-dlp, BASS and Deno
+      - name: Download FFmpeg and BASS
         run: |
           set -euo pipefail
           mkdir -p logs
           {
-            mkdir -p downloads tools/ffmpeg/bin tools/yt-dlp tools/bass/x64 tools/deno
+            mkdir -p downloads tools/ffmpeg/bin tools/bass/x64
             curl -fsSL --retry 3 -o downloads/ffmpeg.zip https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip
             7z x -y -odownloads/ffmpeg downloads/ffmpeg.zip > /dev/null
             cp downloads/ffmpeg/*/bin/ffmpeg.exe downloads/ffmpeg/*/bin/ffprobe.exe tools/ffmpeg/bin/
-            curl -fsSL --retry 3 -o tools/yt-dlp/yt-dlp.exe https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe
             curl -fsSL --retry 3 -o downloads/bass.zip https://www.un4seen.com/files/bass24.zip
             7z x -y -odownloads/bass downloads/bass.zip > /dev/null
             cp downloads/bass/x64/bass.dll tools/bass/x64/bass.dll
-            curl -fsSL --retry 3 -o downloads/deno.zip https://github.com/denoland/deno/releases/latest/download/deno-x86_64-pc-windows-msvc.zip
-            7z x -y -otools/deno downloads/deno.zip > /dev/null
             tools/ffmpeg/bin/ffmpeg.exe -hide_banner -version
             filters="$(tools/ffmpeg/bin/ffmpeg.exe -hide_banner -filters)"
             if grep -q rubberband <<< "$filters"; then echo "rubberband: ok"; else echo "rubberband: MISSING"; exit 1; fi
-            echo "yt-dlp: $(tools/yt-dlp/yt-dlp.exe --version)"
-            tools/deno/deno.exe --version
             ls -la tools/bass/x64
           } 2>&1 | tee logs/tools.log
 
@@ -152,7 +147,7 @@ jobs:
             echo
             echo '```text'
             ls -la installer/Output 2>/dev/null
-            grep -h -E "rubberband:|yt-dlp:|deno [0-9]|htdemucs model|smoke test|MusicMixer.exe|https://github.com/.*/releases/" logs/*.log 2>/dev/null
+            grep -h -E "rubberband:|htdemucs model|smoke test|MusicMixer.exe|https://github.com/.*/releases/" logs/*.log 2>/dev/null
             echo '```'
             if [ "${JOB_STATUS}" != "success" ]; then
               for f in logs/tools.log logs/demucs.log logs/smoke.log logs/publish.log logs/inno.log logs/release.log; do

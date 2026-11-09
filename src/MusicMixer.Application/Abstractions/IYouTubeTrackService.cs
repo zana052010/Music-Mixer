@@ -1,5 +1,5 @@
-// Порт поиска и загрузки с YouTube. Реализация — YtDlpTrackService
-// (yt-dlp + FFmpeg).
+// Порт поиска и загрузки с YouTube. Реализация — YoutubeExplodeTrackService
+// (YoutubeExplode + FFmpeg).
 using MusicMixer.Application.YouTube;
 
 namespace MusicMixer.Application.Abstractions;

@@ -126,91 +126,29 @@ public sealed record DemucsOptions
 }
 
 /// <summary>
-/// Параметры yt-dlp: путь к бинарнику для поиска и загрузки с YouTube.
+/// Параметры YouTube (YoutubeExplode). Внешние программы не нужны;
+/// настраивается только необязательный cookies.txt в формате Netscape.
 /// </summary>
-public sealed record YtDlpOptions
+public sealed record YouTubeOptions
 {
-    public string ExecutablePath { get; init; } = "yt-dlp";
-
     /// <summary>
-    /// Файл cookies.txt для YouTube: обходит проверку «Sign in to confirm
-    /// you're not a bot», которая зависит от репутации сети, а не приложения.
+    /// Файл cookies.txt для YouTube: помогает при проверке «Sign in to confirm
+    /// you're not a bot» и ограничении запросов из сети.
     /// </summary>
     public string? CookiesFile { get; init; }
 
     /// <summary>
-    /// Имя браузера для прямого чтения cookies (chrome, firefox, edge и т. п.).
+    /// Читает MUSICMIXER_YOUTUBE_COOKIES, а для совместимости со старыми
+    /// настройками — MUSICMIXER_YTDLP_COOKIES.
     /// </summary>
-    public string? CookiesFromBrowser { get; init; }
-
-    /// <summary>
-    /// Если YouTube потребует вход, повторить загрузку с cookies браузера
-    /// по умолчанию. Отключается MUSICMIXER_YTDLP_AUTO_COOKIES=0.
-    /// </summary>
-    public bool AutoCookiesFromBrowser { get; init; } = true;
-
-    /// <summary>
-    /// Явный JavaScript runtime для yt-dlp: "node", "deno", "bun" или
-    /// "node:C:\path\to\node.exe". Если null, runtime ищется автоматически.
-    /// </summary>
-    public string? JavaScriptRuntime { get; init; }
-
-    /// <summary>
-    /// Определяет yt-dlp в таком порядке: переменная MUSICMIXER_YTDLP,
-    /// встроенный tools/yt-dlp рядом с приложением, затем PATH. Cookies
-    /// читаются из MUSICMIXER_YTDLP_COOKIES и MUSICMIXER_YTDLP_COOKIES_FROM_BROWSER.
-    /// </summary>
-    public static YtDlpOptions FromEnvironment()
+    public static YouTubeOptions FromEnvironment() => new()
     {
-        var configuredPath = Environment.GetEnvironmentVariable("MUSICMIXER_YTDLP");
-        var executablePath = !string.IsNullOrWhiteSpace(configuredPath)
-            ? configuredPath.Trim()
-            : FindBundledExecutable() ?? new YtDlpOptions().ExecutablePath;
-
-        return new YtDlpOptions
-        {
-            ExecutablePath = executablePath,
-            CookiesFile = NullIfWhiteSpace(
-                Environment.GetEnvironmentVariable("MUSICMIXER_YTDLP_COOKIES")),
-            CookiesFromBrowser = NullIfWhiteSpace(
-                Environment.GetEnvironmentVariable("MUSICMIXER_YTDLP_COOKIES_FROM_BROWSER")),
-            AutoCookiesFromBrowser = !IsFalse(
-                Environment.GetEnvironmentVariable("MUSICMIXER_YTDLP_AUTO_COOKIES")),
-            JavaScriptRuntime = NullIfWhiteSpace(
-                Environment.GetEnvironmentVariable("MUSICMIXER_YTDLP_JS_RUNTIME")),
-        };
-    }
-
-    /// <summary>
-    /// Ищет yt-dlp в tools/yt-dlp, поднимаясь от каталога приложения вверх
-    /// до восьми уровней, как это делает поиск Demucs. Это покрывает запуск
-    /// из bin/Debug, из publish и из корня репозитория.
-    /// </summary>
-    private static string? FindBundledExecutable()
-    {
-        var fileName = OperatingSystem.IsWindows() ? "yt-dlp.exe" : "yt-dlp";
-        var candidates = new List<string>
-        {
-            Path.Combine(AppContext.BaseDirectory, "tools", "yt-dlp", fileName),
-            Path.Combine(AppContext.BaseDirectory, fileName),
-        };
-
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        for (var depth = 0; depth < 8 && directory is not null; depth++, directory = directory.Parent)
-        {
-            candidates.Add(Path.Combine(directory.FullName, "tools", "yt-dlp", fileName));
-        }
-
-        return candidates.FirstOrDefault(File.Exists);
-    }
+        CookiesFile = NullIfWhiteSpace(Environment.GetEnvironmentVariable("MUSICMIXER_YOUTUBE_COOKIES"))
+            ?? NullIfWhiteSpace(Environment.GetEnvironmentVariable("MUSICMIXER_YTDLP_COOKIES")),
+    };
 
     private static string? NullIfWhiteSpace(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-
-    private static bool IsFalse(string? value) =>
-        string.Equals(value, "0", StringComparison.Ordinal) ||
-        string.Equals(value, "false", StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(value, "no", StringComparison.OrdinalIgnoreCase);
 }
 
 /// <summary>

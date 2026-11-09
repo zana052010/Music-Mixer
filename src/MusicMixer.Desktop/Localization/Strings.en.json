@@ -176,7 +176,7 @@
   "ErrorYouTubeSearch": "YouTube search failed. Check the connection and try again.",
   "ErrorYouTubeVideoUnavailable": "YouTube will not provide this video. It may be removed, region-restricted, or require sign-in. Try another result.",
   "ErrorYouTubeVideoUnplayable": "YouTube cannot play this video here. Try another result.",
-  "ErrorYouTubeSignIn": "YouTube requires sign-in verification for this network. MusicMixer tried cookies from your default browser, but the browser keeps its cookie database locked while running. Fully quit Edge/Chrome/Brave, including background processes, make sure you are signed in to YouTube there, then retry. You can also set MUSICMIXER_YTDLP_COOKIES or MUSICMIXER_YTDLP_COOKIES_FROM_BROWSER.",
+  "ErrorYouTubeSignIn": "YouTube requires sign-in verification or has temporarily rate-limited this network. Click \"Choose cookies.txt\" and select a Netscape-format youtube.com cookies file exported from a browser where you are signed in to YouTube, or set its path in MUSICMIXER_YOUTUBE_COOKIES. Then retry.",
   "ErrorYouTubeCookiesFile": "The selected cookies file could not be used. Export youtube.com cookies in Netscape format and choose the file again.",
   "ErrorYouTubeNoAudio": "This video has no usable audio stream. Try another result.",
   "ErrorYouTubeDownload": "The audio download failed. Check the connection and try again.",

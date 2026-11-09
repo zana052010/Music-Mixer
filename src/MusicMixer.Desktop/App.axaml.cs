@@ -75,11 +75,11 @@ public partial class App : Avalonia.Application
         var localization = LocalizationManager.Instance;
         localization.SetLanguage(LocalizationManager.GetSystemDefaultCulture());
 
-        // Пути к ffmpeg, yt-dlp и Demucs фиксируются один раз, чтобы не искать
+        // Пути к ffmpeg и Demucs фиксируются один раз, чтобы не искать
         // инструменты в PATH и не читать переменные окружения на каждый запуск.
         var ffmpegOptions = FfmpegOptions.FromEnvironment();
         var demucsOptions = DemucsOptions.FromEnvironment();
-        var ytDlpOptions = YtDlpOptions.FromEnvironment();
+        var youTubeOptions = YouTubeOptions.FromEnvironment();
         var analysisOptions = new AudioAnalysisOptions();
         AddFfmpegDirectoryToProcessPath(ffmpegOptions.ExecutablePath);
 
@@ -87,14 +87,15 @@ public partial class App : Avalonia.Application
 
         services.AddSingleton(ffmpegOptions);
         services.AddSingleton(demucsOptions);
-        services.AddSingleton(ytDlpOptions);
+        services.AddSingleton(youTubeOptions);
         services.AddSingleton(analysisOptions);
         // Нужен сервисам диалогов и файлового пикера, чтобы получить окно-владелец.
         services.AddSingleton<IClassicDesktopStyleApplicationLifetime>(desktop);
         services.AddSingleton<ILocalizationService>(localization);
         services.AddSingleton<IThemeService, ThemeService>();
         // Один HttpClient на процесс: сокеты переиспользуются, а таймаут
-        // не даёт зависнуть загрузке обложек и запросам YouTube.
+        // не даёт зависнуть загрузке обложек. YouTube использует собственный
+        // клиент без короткого таймаута, чтобы длинные загрузки не обрывались.
         services.AddSingleton(new HttpClient { Timeout = TimeSpan.FromSeconds(15) });
         // Общий раннер внешних процессов: единые отмена, таймауты и перехват вывода.
         services.AddSingleton<IProcessRunner, ProcessRunner>();
@@ -137,12 +138,13 @@ public partial class App : Avalonia.Application
         // Адаптер скрывает Avalonia StorageProvider от ViewModel.
         services.AddSingleton<IFilePickerService>(
             _ => new StorageProviderFilePickerService(desktop));
-        // Поиск и загрузка YouTube идут через yt-dlp, конвертация в WAV — через ffmpeg.
+        // Поиск и загрузка YouTube идут через YoutubeExplode внутри процесса,
+        // конвертация в WAV — через ffmpeg.
         services.AddSingleton<IYouTubeTrackService>(
-            provider => new YtDlpTrackService(
+            provider => new YoutubeExplodeTrackService(
                 provider.GetRequiredService<IProcessRunner>(),
                 ffmpegOptions,
-                ytDlpOptions));
+                youTubeOptions));
         // Сервисы диалогов не хранят состояние и живут всё время работы приложения.
         services.AddSingleton<IYouTubeDialogService, YouTubeSearchDialogService>();
         services.AddTransient<YouTubeSearchViewModel>();
