@@ -14,6 +14,7 @@ using MusicMixer.Desktop.Localization;
 using MusicMixer.Desktop.Services;
 using MusicMixer.Desktop.Trimming;
 using MusicMixer.Desktop.YouTube;
+using MusicMixer.Domain.Alignment;
 using MusicMixer.Domain.Exceptions;
 using MusicMixer.Domain.Models;
 
@@ -76,6 +77,11 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private AlignmentPlan? _alignment;
     private double _appliedFinePitchSemitones;
     private double _appliedVocalSpeedRatio = 1.0;
+
+    // Ручные поправки анализа, ожидающие рендера. После успешного рендера
+    // они совпадают с поправками в _session, при ошибке откатываются к ним.
+    private TrackAnalysisOverride _requestedInstrumentalOverride = TrackAnalysisOverride.None;
+    private TrackAnalysisOverride _requestedVocalOverride = TrackAnalysisOverride.None;
 
     // Статусы и ошибки хранятся ключами локализации + аргументами:
     // при смене языка они пересобираются без потери состояния.
@@ -348,6 +354,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
             _session = result.Session;
             _alignment = result.Alignment;
+            _requestedInstrumentalOverride = TrackAnalysisOverride.None;
+            _requestedVocalOverride = TrackAnalysisOverride.None;
             _appliedFinePitchSemitones = 0;
             _appliedVocalSpeedRatio = result.Alignment.Parameters.PlaybackSpeedRatio;
             SetVocalSpeedSilently(_appliedVocalSpeedRatio);
@@ -1309,6 +1317,14 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         // Запоминаем состояние до рендера, чтобы вернуть пользователя
         // примерно туда же, где он слушал трек.
+        // Ручные поправки анализа применяются к сессии только вместе с рендером:
+        // до успешного результата в _session остаются прежние значения.
+        var requestedSession = session.WithAnalysisOverrides(
+            _requestedInstrumentalOverride,
+            _requestedVocalOverride);
+        var analysisChanged =
+            !Equals(requestedSession.InstrumentalOverride, session.InstrumentalOverride) ||
+            !Equals(requestedSession.VocalOverride, session.VocalOverride);
         var requestedFinePitch = FinePitchSemitones;
         var requestedSpeedRatio = VocalSpeedRatio;
         var previousFinePitch = _appliedFinePitchSemitones;
@@ -1335,7 +1351,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             var progress = new Progress<OperationProgress>(
                 value => UpdateProgress(value, ProgressOperation.FineTune));
             var render = await _workflow.RenderAlignedVocalAsync(
-                session,
+                requestedSession,
                 requestedFinePitch,
                 TimeSpan.FromMilliseconds(OffsetNudgeMilliseconds),
                 outputPath,
@@ -1345,7 +1361,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            var updatedSession = session.WithAlignedVocal(render.AlignedVocalPath);
+            var updatedSession = requestedSession.WithAlignedVocal(render.AlignedVocalPath);
             await _player.LoadAsync(
                 updatedSession.InstrumentalPath,
                 updatedSession.AlignedVocalPath,
@@ -1358,6 +1374,11 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             _appliedFinePitchSemitones = requestedFinePitch;
             _appliedVocalSpeedRatio = requestedSpeedRatio;
             HasPreparedMix = true;
+            if (analysisChanged)
+            {
+                TrackA.SetAnalysis(updatedSession.InstrumentalTrack, updatedSession.InstrumentalOverride);
+                TrackB.SetAnalysis(updatedSession.VocalTrack, updatedSession.VocalOverride);
+            }
             IsPlaybackAvailable = true;
 
             _player.SetVolumes(InstrumentalVolume, VocalVolume);
@@ -1379,7 +1400,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             PlaybackDurationText = FormatTime(_player.Duration);
             ProgressPercent = 100;
             RefreshAlignmentLabels();
-            SetStatus("StatusFineTuneApplied");
+            SetStatus(analysisChanged ? "StatusAnalysisOverrideApplied" : "StatusFineTuneApplied");
 
             if (wasPlaying)
             {
@@ -1417,11 +1438,93 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         }
         finally
         {
+            // Если рендер не удался, ожидающие поправки возвращаются к тем,
+            // что реально звучат в сессии; после успеха это ничего не меняет.
+            if (_session is { } appliedSession)
+            {
+                _requestedInstrumentalOverride = appliedSession.InstrumentalOverride;
+                _requestedVocalOverride = appliedSession.VocalOverride;
+            }
+
             IsBusy = false;
             IsProgressIndeterminate = false;
             RefreshCommandAvailability();
         }
     }
+
+    /// <summary>
+    /// «Применить» в редакторе анализа: берёт BPM, первую долю и тональность
+    /// из полей карточки и пересобирает вокал с новым выравниванием.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanTuneVocal))]
+    private void ApplyAnalysisOverride(string? slotId)
+    {
+        var isTrackA = IsTrackASlot(slotId);
+        var slot = isTrackA ? TrackA : TrackB;
+        RequestAnalysisOverride(isTrackA, slot.BuildAnalysisOverride());
+    }
+
+    /// <summary>«Авто»: убирает ручные поправки дорожки и возвращает анализ.</summary>
+    [RelayCommand(CanExecute = nameof(CanTuneVocal))]
+    private void ResetAnalysisOverride(string? slotId) =>
+        RequestAnalysisOverride(IsTrackASlot(slotId), TrackAnalysisOverride.None);
+
+    private void RequestAnalysisOverride(bool isTrackA, TrackAnalysisOverride analysisOverride)
+    {
+        if (_session is not { } session || _alignment is not { } alignment)
+        {
+            return;
+        }
+
+        var instrumentalOverride = isTrackA ? analysisOverride : _requestedInstrumentalOverride;
+        var vocalOverride = isTrackA ? _requestedVocalOverride : analysisOverride;
+        if (Equals(instrumentalOverride, _requestedInstrumentalOverride) &&
+            Equals(vocalOverride, _requestedVocalOverride))
+        {
+            // Значения не изменились: возвращаем поля редактора к применённым
+            // значениям, повторный рендер не нужен.
+            var slot = isTrackA ? TrackA : TrackB;
+            slot.SetAnalysis(
+                isTrackA ? session.InstrumentalTrack : session.VocalTrack,
+                isTrackA ? session.InstrumentalOverride : session.VocalOverride);
+            return;
+        }
+
+        var candidate = session.WithAnalysisOverrides(instrumentalOverride, vocalOverride);
+        AlignmentPlan preview;
+        try
+        {
+            // Предварительный расчёт без рендера: проверяем, что с новыми
+            // значениями треки можно выровнять, и узнаём новый автотемп.
+            preview = AlignmentCalculator.Calculate(
+                candidate.EffectiveInstrumentalTrack,
+                candidate.EffectiveVocalTrack,
+                FinePitchSemitones,
+                TimeSpan.FromMilliseconds(OffsetNudgeMilliseconds));
+        }
+        catch (AlignmentException exception)
+        {
+            SetErrorFromException(exception);
+            SetStatus("StatusFineTuneFailed");
+            return;
+        }
+
+        ClearError();
+        _requestedInstrumentalOverride = instrumentalOverride;
+        _requestedVocalOverride = vocalOverride;
+
+        // Новый BPM меняет автоматический коэффициент темпа. Ползунок скорости
+        // переставляем на него, иначе прежняя скорость перекрыла бы поправку.
+        if (Math.Abs(preview.AutomaticPlaybackSpeedRatio - alignment.AutomaticPlaybackSpeedRatio) > 1e-9)
+        {
+            SetVocalSpeedSilently(preview.AutomaticPlaybackSpeedRatio);
+        }
+
+        ScheduleVocalRender();
+    }
+
+    private static bool IsTrackASlot(string? slotId) =>
+        !string.Equals(slotId, "B", StringComparison.OrdinalIgnoreCase);
 
     private void TryResumeAfterFailedFineTune(bool wasPlaying)
     {
@@ -1527,6 +1630,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         _session = null;
         _alignment = null;
+        _requestedInstrumentalOverride = TrackAnalysisOverride.None;
+        _requestedVocalOverride = TrackAnalysisOverride.None;
         _appliedFinePitchSemitones = 0;
         _appliedVocalSpeedRatio = 1.0;
         SetVocalSpeedSilently(1.0);
@@ -1668,6 +1773,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         TrimAndExportMixCommand.NotifyCanExecuteChanged();
         ResetVocalSpeedCommand.NotifyCanExecuteChanged();
         SetNeutralVocalSpeedCommand.NotifyCanExecuteChanged();
+        ApplyAnalysisOverrideCommand.NotifyCanExecuteChanged();
+        ResetAnalysisOverrideCommand.NotifyCanExecuteChanged();
     }
 
     private bool CanProcessTracks() =>

@@ -2,6 +2,7 @@
 // Слой Desktop. Хранит трек, путь к исходнику, диапазон обрезки и
 // локализованные подписи; сам звук не обрабатывает.
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using MusicMixer.Desktop.Localization;
 using MusicMixer.Domain.Models;
 
@@ -22,6 +23,21 @@ public sealed partial class TrackSlotViewModel : ObservableObject, IDisposable
     private TimeSpan? _trimStart;
     private TimeSpan? _trimEnd;
 
+    // Поля редактора округляют BPM до сотых, а первую долю до миллисекунд;
+    // разница меньше шага округления не считается ручной поправкой.
+    private const double BpmTolerance = 0.006;
+    private const double DownbeatToleranceMilliseconds = 0.6;
+
+    // Ниже 50 % детектор часто путает половинный темп или параллельную
+    // тональность, и карточка подсказывает проверить значения на слух.
+    private const double LowConfidenceThreshold = 0.5;
+
+    // Исходный результат анализа и ручные поправки к нему. Track хранит уже
+    // применённые значения, а _automaticTrack нужен кнопке «Авто».
+    private AudioTrack? _automaticTrack;
+    private TrackAnalysisOverride _analysisOverride = TrackAnalysisOverride.None;
+    private bool _isApplyingAnalysis;
+
     public TrackSlotViewModel(ILocalizationService localization)
     {
         _localization = localization;
@@ -32,6 +48,35 @@ public sealed partial class TrackSlotViewModel : ObservableObject, IDisposable
 
     [ObservableProperty]
     private AudioTrack? track;
+
+    // ---- Редактор анализа ---------------------------------------------
+    // Поля заполняются из Track и меняются пользователем; в трек они попадают
+    // только после команды «Применить» в MainViewModel.
+
+    [ObservableProperty]
+    private decimal? editableBpm;
+
+    [ObservableProperty]
+    private decimal? editableDownbeatSeconds;
+
+    [ObservableProperty]
+    private KeyOption? editableKey;
+
+    public IReadOnlyList<KeyOption> KeyOptions { get; } = KeyOption.All;
+
+    public TrackAnalysisOverride AnalysisOverride => _analysisOverride;
+
+    public bool IsAnalysisOverridden => !_analysisOverride.IsEmpty;
+
+    public bool HasConfidence => Track is { TempoConfidence: not null, KeyConfidence: not null };
+
+    public string ConfidenceLabel => Track is { TempoConfidence: { } tempo, KeyConfidence: { } key }
+        ? _localization.Format("AnalysisConfidenceValue", tempo, key)
+        : string.Empty;
+
+    public bool IsLowConfidence =>
+        Track is { TempoConfidence: { } tempo, KeyConfidence: { } key } &&
+        (tempo < LowConfidenceThreshold || key < LowConfidenceThreshold);
 
     public bool HasTrack => Track is not null;
 
@@ -163,10 +208,94 @@ public sealed partial class TrackSlotViewModel : ObservableObject, IDisposable
         other.OnPropertyChanged(nameof(StatusText));
     }
 
+    /// <summary>
+    /// Показывает в карточке исходный анализ вместе с ручными поправками.
+    /// Вызывается MainViewModel после успешного рендера с новыми значениями.
+    /// </summary>
+    public void SetAnalysis(AudioTrack automaticTrack, TrackAnalysisOverride analysisOverride)
+    {
+        ArgumentNullException.ThrowIfNull(automaticTrack);
+        ArgumentNullException.ThrowIfNull(analysisOverride);
+
+        _isApplyingAnalysis = true;
+        try
+        {
+            _automaticTrack = automaticTrack;
+            _analysisOverride = analysisOverride;
+            Track = analysisOverride.ApplyTo(automaticTrack);
+        }
+        finally
+        {
+            _isApplyingAnalysis = false;
+        }
+
+        // Track мог не измениться (например, «Авто» без поправок), поэтому
+        // поля редактора и флаги обновляются явно.
+        LoadAnalysisEditor();
+        OnPropertyChanged(nameof(AnalysisOverride));
+        OnPropertyChanged(nameof(IsAnalysisOverridden));
+    }
+
+    /// <summary>
+    /// Собирает поправки из полей редактора. Значение, совпадающее с
+    /// автоматическим с точностью до округления в поле, поправкой не считается.
+    /// </summary>
+    public TrackAnalysisOverride BuildAnalysisOverride()
+    {
+        var automatic = _automaticTrack ?? Track;
+        if (automatic is null)
+        {
+            return TrackAnalysisOverride.None;
+        }
+
+        double? bpm = EditableBpm is { } bpmValue
+            ? Math.Clamp(
+                (double)bpmValue,
+                TrackAnalysisOverride.MinimumBeatsPerMinute,
+                TrackAnalysisOverride.MaximumBeatsPerMinute)
+            : null;
+        if (bpm is { } requestedBpm &&
+            automatic.BeatsPerMinute is { } automaticBpm &&
+            Math.Abs(requestedBpm - automaticBpm) < BpmTolerance)
+        {
+            bpm = null;
+        }
+
+        TimeSpan? downbeat = EditableDownbeatSeconds is { } secondsValue
+            ? TimeSpan.FromSeconds(Math.Clamp(
+                (double)secondsValue,
+                0,
+                TrackAnalysisOverride.MaximumDownbeatOffset.TotalSeconds))
+            : null;
+        if (downbeat is { } requestedDownbeat &&
+            automatic.DownbeatOffset is { } automaticDownbeat &&
+            Math.Abs((requestedDownbeat - automaticDownbeat).TotalMilliseconds) < DownbeatToleranceMilliseconds)
+        {
+            downbeat = null;
+        }
+
+        var key = EditableKey?.Key;
+        if (key is not null && key == automatic.Key)
+        {
+            key = null;
+        }
+
+        return new TrackAnalysisOverride(bpm, downbeat, key);
+    }
+
     public void Dispose() => _localization.LanguageChanged -= OnLanguageChanged;
 
     partial void OnTrackChanged(AudioTrack? value)
     {
+        if (!_isApplyingAnalysis)
+        {
+            // Новый импорт, обрезка или обмен слотов: прежние поправки
+            // относились к другому треку и сбрасываются.
+            _automaticTrack = null;
+            _analysisOverride = TrackAnalysisOverride.None;
+        }
+
+        LoadAnalysisEditor();
         // Source generator вызывает этот hook после смены Track.
         // Все производные свойства нужно уведомить вручную.
         OnPropertyChanged(nameof(HasTrack));
@@ -179,6 +308,11 @@ public sealed partial class TrackSlotViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(KeyLabel));
         OnPropertyChanged(nameof(CamelotLabel));
         OnPropertyChanged(nameof(HasAnalysis));
+        OnPropertyChanged(nameof(AnalysisOverride));
+        OnPropertyChanged(nameof(IsAnalysisOverridden));
+        OnPropertyChanged(nameof(HasConfidence));
+        OnPropertyChanged(nameof(ConfidenceLabel));
+        OnPropertyChanged(nameof(IsLowConfidence));
     }
 
     private void OnLanguageChanged(object? sender, EventArgs eventArgs)
@@ -190,6 +324,42 @@ public sealed partial class TrackSlotViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(KeyLabel));
         OnPropertyChanged(nameof(StatusText));
         OnPropertyChanged(nameof(TrimRangeLabel));
+        OnPropertyChanged(nameof(ConfidenceLabel));
+    }
+
+    // Кнопки ÷2 и ×2 исправляют типичную ошибку детектора — половинный
+    // или двойной темп. Значение попадёт в трек после «Применить».
+    [RelayCommand]
+    private void HalveBpm() => ScaleEditableBpm(0.5m);
+
+    [RelayCommand]
+    private void DoubleBpm() => ScaleEditableBpm(2m);
+
+    private void ScaleEditableBpm(decimal factor)
+    {
+        if (EditableBpm is not { } bpm)
+        {
+            return;
+        }
+
+        EditableBpm = Math.Clamp(
+            Math.Round(bpm * factor, 2),
+            (decimal)TrackAnalysisOverride.MinimumBeatsPerMinute,
+            (decimal)TrackAnalysisOverride.MaximumBeatsPerMinute);
+    }
+
+    private void LoadAnalysisEditor()
+    {
+        var current = Track;
+        EditableBpm = current?.BeatsPerMinute is { } bpm
+            ? (decimal)Math.Round(bpm, 2)
+            : null;
+        EditableDownbeatSeconds = current?.DownbeatOffset is { } offset
+            ? (decimal)Math.Round(offset.TotalSeconds, 3)
+            : null;
+        EditableKey = current?.Key is { } key
+            ? KeyOptions.FirstOrDefault(option => option.Key == key)
+            : null;
     }
 
     private void NotifyTrimState()

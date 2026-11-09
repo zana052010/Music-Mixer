@@ -103,7 +103,7 @@
                   Tag="A"
                   Margin="0,0,8,0"
                   DragDrop.AllowDrop="True">
-            <Grid RowDefinitions="Auto,Auto,Auto,Auto">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto">
               <Grid Grid.Row="0" ColumnDefinitions="Auto,*">
                 <Border Classes="index-chip"
                         ToolTip.Tip="{loc:Localize Key=RoleInstrumental}">
@@ -176,6 +176,98 @@
                            Classes="mono muted"
                            VerticalAlignment="Center" />
               </Grid>
+
+              <Border Grid.Row="4"
+                      Margin="0,14,0,0"
+                      Padding="0,12,0,0"
+                      BorderBrush="{DynamicResource DividerBrush}"
+                      BorderThickness="0,1,0,0"
+                      IsVisible="{Binding HasPreparedMix}">
+                <StackPanel Spacing="8">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="{loc:Localize Key=AnalysisEditorTitle}"
+                               Classes="tiny faint"
+                               VerticalAlignment="Center" />
+                    <Border Grid.Column="1"
+                            Classes="tag"
+                            IsVisible="{Binding TrackA.IsAnalysisOverridden}">
+                      <TextBlock Text="{loc:Localize Key=AnalysisManualBadge}" Classes="tiny" />
+                    </Border>
+                  </Grid>
+                  <TextBlock Text="{Binding TrackA.ConfidenceLabel}"
+                             Classes="tiny faint"
+                             IsVisible="{Binding TrackA.HasConfidence}"
+                             TextWrapping="Wrap" />
+                  <TextBlock Text="{loc:Localize Key=AnalysisLowConfidenceHint}"
+                             Classes="tiny"
+                             IsVisible="{Binding TrackA.IsLowConfidence}"
+                             TextWrapping="Wrap" />
+                  <Grid ColumnDefinitions="Auto,*,Auto,Auto"
+                        RowDefinitions="Auto,Auto,Auto">
+                    <TextBlock Text="{loc:Localize Key=AnalysisBpmLabel}"
+                               Classes="small muted"
+                               VerticalAlignment="Center"
+                               Margin="0,0,10,0" />
+                    <NumericUpDown Grid.Column="1"
+                                   Value="{Binding TrackA.EditableBpm}"
+                                   Minimum="40"
+                                   Maximum="300"
+                                   Increment="0.1"
+                                   FormatString="0.00" />
+                    <Button Grid.Column="2"
+                            Classes="outline compact"
+                            Content="{loc:Localize Key=AnalysisHalveBpm}"
+                            Command="{Binding TrackA.HalveBpmCommand}"
+                            Margin="6,0,0,0"
+                            ToolTip.Tip="{loc:Localize Key=AnalysisHalveBpmTooltip}" />
+                    <Button Grid.Column="3"
+                            Classes="outline compact"
+                            Content="{loc:Localize Key=AnalysisDoubleBpm}"
+                            Command="{Binding TrackA.DoubleBpmCommand}"
+                            Margin="6,0,0,0"
+                            ToolTip.Tip="{loc:Localize Key=AnalysisDoubleBpmTooltip}" />
+                    <TextBlock Grid.Row="1"
+                               Text="{loc:Localize Key=AnalysisDownbeatLabel}"
+                               Classes="small muted"
+                               VerticalAlignment="Center"
+                               Margin="0,6,10,0" />
+                    <NumericUpDown Grid.Row="1"
+                                   Grid.Column="1"
+                                   Grid.ColumnSpan="3"
+                                   Margin="0,6,0,0"
+                                   Value="{Binding TrackA.EditableDownbeatSeconds}"
+                                   Minimum="0"
+                                   Maximum="60"
+                                   Increment="0.01"
+                                   FormatString="0.000" />
+                    <TextBlock Grid.Row="2"
+                               Text="{loc:Localize Key=AnalysisKeyLabel}"
+                               Classes="small muted"
+                               VerticalAlignment="Center"
+                               Margin="0,6,10,0" />
+                    <ComboBox Grid.Row="2"
+                              Grid.Column="1"
+                              Grid.ColumnSpan="3"
+                              Margin="0,6,0,0"
+                              HorizontalAlignment="Stretch"
+                              ItemsSource="{Binding TrackA.KeyOptions}"
+                              SelectedItem="{Binding TrackA.EditableKey}" />
+                  </Grid>
+                  <StackPanel Orientation="Horizontal"
+                              Spacing="7"
+                              HorizontalAlignment="Right">
+                    <Button Classes="outline compact"
+                            Content="{loc:Localize Key=AnalysisReset}"
+                            Command="{Binding ResetAnalysisOverrideCommand}"
+                            CommandParameter="A"
+                            ToolTip.Tip="{loc:Localize Key=AnalysisResetTooltip}" />
+                    <Button Classes="primary compact"
+                            Content="{loc:Localize Key=AnalysisApply}"
+                            Command="{Binding ApplyAnalysisOverrideCommand}"
+                            CommandParameter="A" />
+                  </StackPanel>
+                </StackPanel>
+              </Border>
             </Grid>
           </Border>
 
@@ -196,7 +288,7 @@
                   Tag="B"
                   Margin="8,0,0,0"
                   DragDrop.AllowDrop="True">
-            <Grid RowDefinitions="Auto,Auto,Auto,Auto">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto">
               <Grid Grid.Row="0" ColumnDefinitions="Auto,*">
                 <Border Classes="index-chip"
                         ToolTip.Tip="{loc:Localize Key=RoleVocals}">
@@ -269,6 +361,98 @@
                            Classes="mono muted"
                            VerticalAlignment="Center" />
               </Grid>
+
+              <Border Grid.Row="4"
+                      Margin="0,14,0,0"
+                      Padding="0,12,0,0"
+                      BorderBrush="{DynamicResource DividerBrush}"
+                      BorderThickness="0,1,0,0"
+                      IsVisible="{Binding HasPreparedMix}">
+                <StackPanel Spacing="8">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="{loc:Localize Key=AnalysisEditorTitle}"
+                               Classes="tiny faint"
+                               VerticalAlignment="Center" />
+                    <Border Grid.Column="1"
+                            Classes="tag"
+                            IsVisible="{Binding TrackB.IsAnalysisOverridden}">
+                      <TextBlock Text="{loc:Localize Key=AnalysisManualBadge}" Classes="tiny" />
+                    </Border>
+                  </Grid>
+                  <TextBlock Text="{Binding TrackB.ConfidenceLabel}"
+                             Classes="tiny faint"
+                             IsVisible="{Binding TrackB.HasConfidence}"
+                             TextWrapping="Wrap" />
+                  <TextBlock Text="{loc:Localize Key=AnalysisLowConfidenceHint}"
+                             Classes="tiny"
+                             IsVisible="{Binding TrackB.IsLowConfidence}"
+                             TextWrapping="Wrap" />
+                  <Grid ColumnDefinitions="Auto,*,Auto,Auto"
+                        RowDefinitions="Auto,Auto,Auto">
+                    <TextBlock Text="{loc:Localize Key=AnalysisBpmLabel}"
+                               Classes="small muted"
+                               VerticalAlignment="Center"
+                               Margin="0,0,10,0" />
+                    <NumericUpDown Grid.Column="1"
+                                   Value="{Binding TrackB.EditableBpm}"
+                                   Minimum="40"
+                                   Maximum="300"
+                                   Increment="0.1"
+                                   FormatString="0.00" />
+                    <Button Grid.Column="2"
+                            Classes="outline compact"
+                            Content="{loc:Localize Key=AnalysisHalveBpm}"
+                            Command="{Binding TrackB.HalveBpmCommand}"
+                            Margin="6,0,0,0"
+                            ToolTip.Tip="{loc:Localize Key=AnalysisHalveBpmTooltip}" />
+                    <Button Grid.Column="3"
+                            Classes="outline compact"
+                            Content="{loc:Localize Key=AnalysisDoubleBpm}"
+                            Command="{Binding TrackB.DoubleBpmCommand}"
+                            Margin="6,0,0,0"
+                            ToolTip.Tip="{loc:Localize Key=AnalysisDoubleBpmTooltip}" />
+                    <TextBlock Grid.Row="1"
+                               Text="{loc:Localize Key=AnalysisDownbeatLabel}"
+                               Classes="small muted"
+                               VerticalAlignment="Center"
+                               Margin="0,6,10,0" />
+                    <NumericUpDown Grid.Row="1"
+                                   Grid.Column="1"
+                                   Grid.ColumnSpan="3"
+                                   Margin="0,6,0,0"
+                                   Value="{Binding TrackB.EditableDownbeatSeconds}"
+                                   Minimum="0"
+                                   Maximum="60"
+                                   Increment="0.01"
+                                   FormatString="0.000" />
+                    <TextBlock Grid.Row="2"
+                               Text="{loc:Localize Key=AnalysisKeyLabel}"
+                               Classes="small muted"
+                               VerticalAlignment="Center"
+                               Margin="0,6,10,0" />
+                    <ComboBox Grid.Row="2"
+                              Grid.Column="1"
+                              Grid.ColumnSpan="3"
+                              Margin="0,6,0,0"
+                              HorizontalAlignment="Stretch"
+                              ItemsSource="{Binding TrackB.KeyOptions}"
+                              SelectedItem="{Binding TrackB.EditableKey}" />
+                  </Grid>
+                  <StackPanel Orientation="Horizontal"
+                              Spacing="7"
+                              HorizontalAlignment="Right">
+                    <Button Classes="outline compact"
+                            Content="{loc:Localize Key=AnalysisReset}"
+                            Command="{Binding ResetAnalysisOverrideCommand}"
+                            CommandParameter="B"
+                            ToolTip.Tip="{loc:Localize Key=AnalysisResetTooltip}" />
+                    <Button Classes="primary compact"
+                            Content="{loc:Localize Key=AnalysisApply}"
+                            Command="{Binding ApplyAnalysisOverrideCommand}"
+                            CommandParameter="B" />
+                  </StackPanel>
+                </StackPanel>
+              </Border>
             </Grid>
           </Border>
         </Grid>

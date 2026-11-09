@@ -30,7 +30,9 @@ public sealed record MashupSession
         AudioTrack vocalTrack,
         StemSeparationResult instrumentalStems,
         StemSeparationResult vocalStems,
-        string alignedVocalPath)
+        string alignedVocalPath,
+        TrackAnalysisOverride? instrumentalOverride = null,
+        TrackAnalysisOverride? vocalOverride = null)
     {
         ArgumentNullException.ThrowIfNull(instrumentalTrack);
         ArgumentNullException.ThrowIfNull(vocalTrack);
@@ -43,6 +45,8 @@ public sealed record MashupSession
         InstrumentalStems = instrumentalStems;
         VocalStems = vocalStems;
         AlignedVocalPath = Path.GetFullPath(alignedVocalPath);
+        InstrumentalOverride = instrumentalOverride ?? TrackAnalysisOverride.None;
+        VocalOverride = vocalOverride ?? TrackAnalysisOverride.None;
     }
 
     public AudioTrack InstrumentalTrack { get; }
@@ -61,10 +65,53 @@ public sealed record MashupSession
 
     public string AlignedVocalPath { get; }
 
+    /// <summary>Ручные поправки анализа дорожки A; None — только автоматика.</summary>
+    public TrackAnalysisOverride InstrumentalOverride { get; }
+
+    /// <summary>Ручные поправки анализа дорожки B; None — только автоматика.</summary>
+    public TrackAnalysisOverride VocalOverride { get; }
+
+    /// <summary>
+    /// Дорожка A с учётом ручных поправок. Именно её видит расчёт выравнивания,
+    /// а исходный InstrumentalTrack остаётся нетронутым для кнопки «Авто».
+    /// </summary>
+    public AudioTrack EffectiveInstrumentalTrack => InstrumentalOverride.ApplyTo(InstrumentalTrack);
+
+    /// <summary>Дорожка B с учётом ручных поправок.</summary>
+    public AudioTrack EffectiveVocalTrack => VocalOverride.ApplyTo(VocalTrack);
+
     /// <summary>
     /// Возвращает копию сессии с новым отрендеренным вокалом; остальные файлы
     /// и метаданные переиспользуются.
     /// </summary>
     public MashupSession WithAlignedVocal(string alignedVocalPath) =>
-        new(InstrumentalTrack, VocalTrack, InstrumentalStems, VocalStems, alignedVocalPath);
+        new(
+            InstrumentalTrack,
+            VocalTrack,
+            InstrumentalStems,
+            VocalStems,
+            alignedVocalPath,
+            InstrumentalOverride,
+            VocalOverride);
+
+    /// <summary>
+    /// Возвращает копию сессии с новыми ручными поправками. Файлы не меняются:
+    /// новый вокал появится только после RenderAlignedVocalAsync.
+    /// </summary>
+    public MashupSession WithAnalysisOverrides(
+        TrackAnalysisOverride instrumentalOverride,
+        TrackAnalysisOverride vocalOverride)
+    {
+        ArgumentNullException.ThrowIfNull(instrumentalOverride);
+        ArgumentNullException.ThrowIfNull(vocalOverride);
+
+        return new(
+            InstrumentalTrack,
+            VocalTrack,
+            InstrumentalStems,
+            VocalStems,
+            AlignedVocalPath,
+            instrumentalOverride,
+            vocalOverride);
+    }
 }

@@ -119,6 +119,33 @@ public sealed class MashupWorkflowTests : IDisposable
         return new Pipeline(workflow, trackAPath, trackBPath, workspaceDirectory, log, processing);
     }
 
+    [Fact]
+    public async Task RenderAlignedVocalAsync_UsesManualAnalysisOverrides()
+    {
+        var pipeline = await CreatePipelineAsync();
+        var prepared = await pipeline.Workflow.PrepareAsync(
+            AudioTrack.CreateUnanalyzed(pipeline.TrackAPath),
+            AudioTrack.CreateUnanalyzed(pipeline.TrackBPath),
+            pipeline.WorkspaceDirectory,
+            enhanceStems: false);
+
+        // Анализ дал 128 и 120 BPM; пользователь исправляет темп вокала на 128.
+        var session = prepared.Session.WithAnalysisOverrides(
+            TrackAnalysisOverride.None,
+            new TrackAnalysisOverride(beatsPerMinute: 128));
+
+        var tuned = await pipeline.Workflow.RenderAlignedVocalAsync(
+            session,
+            finePitchSemitones: 0,
+            offsetNudge: TimeSpan.Zero,
+            outputFilePath: Path.Combine(pipeline.WorkspaceDirectory, "aligned-vocals-manual.wav"));
+
+        Assert.Equal(1.0, tuned.Alignment.AutomaticPlaybackSpeedRatio, 6);
+        Assert.NotNull(pipeline.Processing.LastParameters);
+        Assert.Equal(1.0, pipeline.Processing.LastParameters.PlaybackSpeedRatio, 6);
+        Assert.Equal(120d, session.VocalTrack.BeatsPerMinute!.Value, 6);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_root))

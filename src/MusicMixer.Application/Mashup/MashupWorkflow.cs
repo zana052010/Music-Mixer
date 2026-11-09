@@ -179,9 +179,11 @@ public sealed class MashupWorkflow : IMashupWorkflow
         // Повторный рендер всегда считается от исходных данных сессии, а не от
         // предыдущего результата. Поэтому +0.5 и затем +1.0 полутона не сложатся
         // в +1.5: итоговый сдвиг останется +1.0.
+        // Ручные поправки BPM, первой доли и тональности уже учтены в
+        // Effective-дорожках; без поправок это исходный анализ.
         var alignment = AlignmentCalculator.Calculate(
-            session.InstrumentalTrack,
-            session.VocalTrack,
+            session.EffectiveInstrumentalTrack,
+            session.EffectiveVocalTrack,
             finePitchSemitones,
             offsetNudge,
             playbackSpeedRatioOverride);
