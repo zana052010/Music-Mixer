@@ -76,6 +76,8 @@ internal static class JavaScriptRuntimeLocator
             {
                 candidates.Add(Path.Combine(home, ".deno", "bin", executableName));
                 candidates.Add(Path.Combine(local, "Deno", "bin", executableName));
+                // Deno, поставляемый установщиком рядом с приложением.
+                candidates.Add(Path.Combine(AppContext.BaseDirectory, "tools", "deno", executableName));
             }
             else
             {

@@ -35,3 +35,8 @@ tools/bass/
 dist/
 publish/
 tools/yt-dlp/
+
+# Сборка установщика
+installer/Output/
+build/
+downloads/
